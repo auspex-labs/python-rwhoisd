@@ -4,7 +4,7 @@ class Cidr:
     """A class representing a CIDRized IPv4 network value.
 
     Specifically, it is representing contiguous IPv4 network blocks
-    that can be expressed as a ip-address/network length pair."""
+    that can be expressed as a ip-address/network-length pair."""
 
     # FIXME: we should probably actually make this class immutable and
     # add methods that generate copies of this class with different
@@ -18,6 +18,16 @@ class Cidr:
         string IPv4 address and a numeric network length, or the same
         as two arguments."""
 
+        # if we are handing a numerical address and netlen, convert
+        # them directly.
+        if isinstance(address, int) and netlen >= 0:
+            self.netlen = netlen
+            self.numaddr = address
+            mask = self._mask(netlen)
+            self.numaddr &= mask
+            self.addr = self._convert_ip4addr(self.numaddr)
+            return
+        
         if not Cidr.ip4addr_re.search(address):
             raise ValueError, repr(address) + \
                   " is not a valid CIDR representation"
@@ -98,12 +108,15 @@ class Cidr:
     
     def length(self):
         """return the length (in number of addresses) of this network block"""
-        return 1 << (32 - self.netlen);
+        return netlen_to_length(self.netlen)
 
     def end(self):
         """return the last IP address in this network block"""
         return self._convert_ip4addr(self.numaddr + self.length() - 1)
-        
+
+    def to_netblock(self):
+        return (self.addr, self.end())
+    
     def _convert_ip4str(self, addr):
         p = 3; a = 0
         for octet in addr.split(".", 3):
@@ -143,13 +156,71 @@ def valid_cidr(address):
         return False
 
 
+def netlen_to_length(netlen):
+    """Convert a network-length to the length of the block in ip
+    addresses."""
+
+    return 1 << (32 - netlen);
+
+def netblock_to_cidr(start, end):
+    """Convert an arbitrary network block expressed as a start and end
+    address (inclusive) into a series of valid CIDR blocks."""
+
+    def largest_prefix(length):
+        # calculates the largest network length (smallest mask length)
+        # that can fit within the block length.
+        i = 1; v = length
+        while i <= 32:
+            if v & 0x80000000: break
+            i += 1; v <<= 1
+        return i
+    def netlen_to_mask(n):
+        # convert the network length into its netmask
+        return ~((1 << (32 - n)) - 1)
+    
+
+    # convert the start and ending addresses of the netblock to Cidr
+    # object, mostly so we can get the numeric versions of their
+    # addresses.
+    cs = valid_cidr(start)
+    ce = valid_cidr(end)
+
+    # if either the start or ending addresses aren't valid ipv4
+    # address, quit now.
+    if not cs or not ce:
+        return None
+
+    # calculate the number of IP address in the netblock
+    block_len = ce.numaddr - cs.numaddr
+    
+    # calcuate the largest CIDR block size that fits
+    netlen = largest_prefix(block_len + 1)
+    
+    res = []; s = cs.numaddr
+    while block_len > 0:
+        mask = netlen_to_mask(netlen)
+        # check to see if our current network length is valid
+        if (s & mask) != s:
+            # if not, shrink the network block size
+            netlen += 1
+            continue
+        # otherwise, we have a valid CIDR block, so add it to the list
+        cv = Cidr(s, netlen)
+        res.append(Cidr(s, netlen))
+        # and setup for the next round:
+        cur_len = netlen_to_length(netlen)
+        s         += cur_len
+        block_len -= cur_len
+        netlen = largest_prefix(block_len + 1)
+    return res
+
 # test driver
 if __name__ == "__main__":
     a = Cidr("127.00.000.1/24")
     b = Cidr("127.0.0.1", 32)
     c = Cidr("24.232.119.192", 26)
     d = Cidr("24.232.119.0", 24)
-    e = Cidr(("24.224.0.0", 11))
+    e = Cidr("24.224.0.0", 11)
     f = Cidr("216.168.111.0/27");
     g = Cidr("127.0.0.2/31");
     h = Cidr("127.0.0.16/32")
@@ -168,3 +239,15 @@ if __name__ == "__main__":
 
     clist.sort()
     print "sorted list of cidr object:\n  ", clist
+
+    netblocks = [ ("192.168.10.0", "192.168.10.255"),
+                  ("192.168.10.0", "192.168.10.63"),
+                  ("172.16.0.0", "172.16.127.255"),
+                  ("24.33.41.22", "24.33.41.37"),
+                  ("196.11.1.0", "196.11.30.255"),
+                  ("192.247.1.0", "192.247.10.255")]
+                  
+    for start, end in netblocks:
+        print "netblock %s - %s:" % (start, end)
+        blocks = netblock_to_cidr(start, end)
+        print blocks
