@@ -1,0 +1,2 @@
+include bin/* sample_data/*
+exclude bin/*~ sample_data/*~

@@ -10,8 +10,8 @@ setup(name="python-rwhoisd",
       author_email="davidb@verisignlabs.com",
       url="http://www.rwhois.net/",
       packages=['rwhoisd'],
-      scripts=os.listdir('bin'),
-      data_files=[('sample_data',
+      scripts=['bin/'+x for x in os.listdir('bin')],
+      data_files=[('lib/pyrwhoisd/sample_data',
                    ['sample_data/example_schema',
                     'sample_data/example_data'])]
      )
