@@ -26,7 +26,7 @@ class MemDB:
         # This exists so unconstrained searches can just iterate over
         # them.
         self.normal_indexes = []
-        self.cidr_indexes = []
+        self.cidr_indexes   = []
 
         # dictonary holding all of the seen class names.  keys are
         # lowercase classnames, value is always None.
@@ -157,6 +157,9 @@ class MemDB:
     def is_autharea(self, aa):
         return self.authareas.has_key(aa.lower())
 
+    def get_authareas(self):
+        return self.authareas.keys()
+    
     def fetch_objects(self, id_list):
         return [ self.main_index[x] for x in id_list
                  if self.main_index.has_key(x) ]
