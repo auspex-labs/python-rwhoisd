@@ -1,3 +1,4 @@
 include bin/* sample_data/*
 include README*
+include LICENSE
 exclude bin/*~ sample_data/*~
