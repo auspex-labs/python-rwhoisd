@@ -1,3 +1,24 @@
+# This file is part of python-rwhoisd
+#
+# Copyright (C) 2003, David E. Blacka
+#
+# $Id: DirectiveProcessor.py,v 1.2 2003/04/28 16:43:37 davidb Exp $
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+# USA
+
 import re
 import Rwhois, config
 
@@ -12,7 +33,8 @@ class DirectiveProcessor:
             "limit"  : self.limit_directive,
             "holdconnect" : self.hold_directive,
             "directive" : self.directive_directive,
-            "xfer" : self.xfer_directive
+            "xfer" : self.xfer_directive,
+            "status" : self.status_directive
             }
 
     def process_directive(self, session, line):
@@ -97,6 +119,21 @@ class DirectiveProcessor:
         session.wfile.write(Rwhois.ok())
 
 
+    def status_directive(self, session, arglist):
+        if session.holdconnect:
+            hc_str = "on"
+        else:
+            hc_str = "off"
+
+        session.wfile.write("%%status limit: %d\r\n" % session.limit)
+        session.wfile.write("%%status holdconnect: %s\r\n" % hc_str)
+        session.wfile.write("%status forward: off\r\n")
+        session.wfile.write("%%status objects: %d\r\n" 
+                            % len(self.db.main_index))
+        session.wfile.write("%status display: dump\r\n")
+        session.wfile.write("%status contact: N/A\r\n")
+        session.wfile.write(Rwhois.ok())
+        
     def xfer_directive(self, session, arglist):
         if not arglist:
             session.wfile.write(Rwhois.error_message(338))
