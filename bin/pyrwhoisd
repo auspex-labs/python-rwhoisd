@@ -1,0 +1,21 @@
+#! /usr/bin/env python
+
+# -*- python -*-
+import sys, os
+
+# determine if the rwhoisd package is in the standard spot relative to
+# this script.
+this_path = sys.path[0]
+rwhoisd_path = os.path.join(this_path, "..", "rwhoisd")
+if os.path.isdir(rwhoisd_path):
+    sys.path.append(rwhoisd_path)
+
+
+import RwhoisServer
+
+RwhoisServer.init(sys.argv)
+try:
+    RwhoisServer.serve()
+except KeyboardInterrupt:
+    print "interrupted"
+
