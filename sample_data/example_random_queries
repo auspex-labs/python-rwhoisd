@@ -1,0 +1,5 @@
+network class-name = bar and foo OR ip-address != foo and "1 2 3 4" and First-Name = "    Bob**"
+Bob
+network 10.0.0.0/8
+domain domain-name="example*" and domain-name=*ple.net and host-name="f*"
+domain organization="foo"

@@ -1,0 +1,13 @@
+#10.131.252.227
+network 10.131.252/24
+network 24.210.66.0/24
+domain a.com
+domain domain-Name = a.com
+contact doe
+contact public and type = "I"
+contact public and type = O or doe and type = I
+contact Pub*
+contact pub*
+contact "Pub*"
+network 11/8
+network foo=bar

@@ -1,0 +1,16 @@
+## Schema description file:
+##   consists of <attribute_name> = <index_type> pairs, one per line.
+##   index_type is one of N, C, or A.
+##   N = normal, string valued index.
+##   C = cidr index (for ip addresses and netblocks)
+##   A = all, both a normal and a cidr index
+
+domain-name  = N
+email        = N
+host-name    = N
+ip-address   = C
+ip-network   = C
+last-name    = N
+name         = N
+network-name = N
+org-name     = N
