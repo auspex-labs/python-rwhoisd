@@ -24,14 +24,25 @@ class RwhoisTCPServer(SocketServer.ThreadingTCPServer):
 class RwhoisHandler(SocketServer.StreamRequestHandler):
 
     def readline(self):
-        try:
-            return self.rfile.readline().strip()[:1024]
-        except KeyboardInterrupt:
-            self.quit_flag = True
-            return
+        """Read a line of input from the client."""
+        # a simple way of doing this
+        # return self.rfile.readline()
 
+        data = self.request.recv(1024)
+        if not data: return None
+
+        lines = data.splitlines(True)
+
+        # ugh. this totally defeats any pipelining, not that rwhois
+        # clients should be doing that.
+        if len(lines) > 1 and config.verbose:
+            print "%s discarding additional input lines: %r" \
+                  % (self.client_address, lines)
+        return lines[0]
+        
     def handle(self):
 
+        print repr(self.request)
         self.quit_flag = False
 
         # output a banner
@@ -43,14 +54,19 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
         session.rfile = self.rfile
         session.wfile = self.wfile
 
-        # first line
-        line = self.readline()
+        if config.verbose:
+            print "%s accepted connection" % (self.client_address,)
 
-        while not self.rfile.closed:
+        c = 0
+        while 1:
+            line = self.readline()
+            if not line: break
+
+            line = line.strip()
+            # we can skip blank lines.
             if not line:
-                line = self.readline()
                 continue
-
+            
             if line.startswith("-"):
                 self.handle_directive(session, line)
             else:
@@ -63,12 +79,12 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
             # check to see if we were asked to quit
             if self.quit_flag: break
 
-            # next line of input
-            line = self.readline()
-
-        print "done with", self.client_address
+        if config.verbose:
+            print "%s disconnected" %  (self.client_address,)
 
     def handle_directive(self, session, line):
+        if config.verbose:
+            print "%s directive %s" % (self.client_address, line)
         if (line.startswith("-quit")):
             self.quit_flag = True
             self.wfile.write(Rwhois.ok())
@@ -76,20 +92,32 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
         directive_processor.process_directive(session, line)
 
     def handle_query(self, session, line):
+        if config.verbose:
+            print "%s query %s" % (self.client_address, line)
         query_processor.process_query(session, line)
 
 
 def usage(pname):
-    print """usage: %s schema_file data_file [data_file ...]""" % pname
+    print """\
+usage: %s [-v] schema_file data_file [data_file ...]
+       -v: verbose """ % pname
     sys.exit(64)
     
 def init(argv):
     import MemDB
+    import getopt
 
-    if len(argv) < 3: usage(argv[0])
-    schema_file = argv[1]
-    data_files  = argv[2:]
+    pname = argv[0]
+    opts, argv = getopt.getopt(argv[1:], 'v')
+    for o, a in opts:
+        if o == "-v":
+            config.verbose = True
     
+    if len(argv) < 2: usage(pname)
+    schema_file = argv[0]
+    data_files  = argv[1:]
+
+
     db = MemDB.MemDB()
 
     db.init_schema(schema_file)
@@ -110,17 +138,14 @@ def serve():
                              RwhoisHandler)
 
     # and handle incoming connections
-    try:
+    if config.verbose:
         if not config.server_address:
             print "listening on port %d" % config.port
         else:
             print "listening on %s port %d" % \
                   (config.server_address, config.port)
-        server.serve_forever()
-    except (KeyboardInterrupt, SystemExit):
-        print "interrupted. exiting."
+    server.serve_forever()
 
-    print "finished serving"
     sys.exit(0)
 
 if __name__ == "__main__":
