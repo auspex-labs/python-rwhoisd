@@ -1,2 +1,3 @@
 include bin/* sample_data/*
+include README*
 exclude bin/*~ sample_data/*~
