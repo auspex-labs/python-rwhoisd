@@ -4,6 +4,12 @@
 ##   this file format) blank lines.  Unlike the rwhoisd file format,
 ##   the Class-Name attribute is required.
 
+##   Note: Auth-Area attributes are required and auth-area names
+##   either need to be domain names or CIDR formatted network block.
+##   Referral objects must have "referred-auth-area" attribute(s) and
+##   "referral" attribute(s) for referrals to work at all.
+
+
 ID: 666.10.0.0.0/8
 Class-Name: network
 Auth-Area: 10.0.0.0/8
