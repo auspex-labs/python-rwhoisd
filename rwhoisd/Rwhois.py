@@ -83,6 +83,9 @@ class rwhoisobject:
         returned."""
         
         return self.data.get(attr.strip().lower(), [default])[0]
+
+    def has_attr(self, attr):
+        return self.data.has_key(attr.strip().lower())
     
     def getid(self):
         """Return the RWhois ID of this object."""
