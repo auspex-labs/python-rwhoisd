@@ -1,11 +1,17 @@
-WHAT IS IT?
+WHAT IS THIS?
 
 As a programming exercise for learning Python, I wrote a simple rwhois
-server.  It uses in-memory data structures, and it intuits
-the schema based on the data it sees.  The server as input takes a
-schema file, which for now just describes which attributes should be
-indexed (and how), and data files which look much like the C rwhoisd's
-data files.
+server (described in RFC 2167).  It uses in-memory data structures,
+and it intuits the schema based on the data it sees.  The server takes
+as input a schema file, which for now just describes which attributes
+should be indexed (and how), and data files which look much like the C
+rwhoisd's data files.
+
+This version supports a sort of extended query syntax: IP or CIDR
+queries ending in "**" will result in a "subnet" search, where all of
+the found subnets at or below the specified network will be returned.
+Ending a IP or CIDR query with a single "*" will result in a
+"supernet" search.
 
 REQUIREMENTS
 
@@ -13,10 +19,24 @@ python 2.2 or later
 
 INSTALL
 
-For now, just run it from the source directory:
+This can be run from it's source directory, which is the preferable
+way to do it.
 
+However, if you wish to install it, as root:
+
+% python setup.py install
+
+This is just using the standard Python distutils, so there is actually
+a great deal of flexibility here.  Try
+
+% python setup.py install --help
+
+to see some of the options available.
 
 RUNNING IT
+
+This is assuming that you are running it from the distribution
+directory.
 
 % tar zxvf python-rwhoisd-0.1.tar.gz
 
@@ -31,10 +51,32 @@ Voila!  You should now have some sort of rwhois server running on port
 CONFIGURING IT
 
 Edit rwhoisd/config.py.
-This file is sort of commented as to what you can change.
 
+This file has comments describing options that you can change.
 
 DATA
 
 See the example_schema and example_data files in the sample_data
 directory.
+
+The format of the data files is very similar to the format used by the
+C rwhois server (rwhoisd-1.5.x from www.rwhois.net).  It has the
+following differences, however:
+
+* These files may have records separated by blank lines instead of
+  dashes.
+
+* They are not sensitive to trailing separators (whitespace or
+  dashes)
+
+* They do not have to be arranged in any special manner.  That is, the
+  C rwhoisd forces (or at least encourages) you to arrange your data
+  files into different directories per authority-area.  These can be
+  wherever.
+
+* This server does not support attribute "aliases".
+
+It should be noted that this server in small ways violates the
+description put forth by RFC 2167.  In particular, it does not
+establish independent schemas for each authority area.  There may be
+other violations as well.
