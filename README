@@ -1,0 +1,40 @@
+WHAT IS IT?
+
+As a programming exercise for learning Python, I wrote a simple rwhois
+server.  It uses in-memory data structures, and it intuits
+the schema based on the data it sees.  The server as input takes a
+schema file, which for now just describes which attributes should be
+indexed (and how), and data files which look much like the C rwhoisd's
+data files.
+
+REQUIREMENTS
+
+python 2.2 or later
+
+INSTALL
+
+For now, just run it from the source directory:
+
+
+RUNNING IT
+
+% tar zxvf python-rwhoisd-0.1.tar.gz
+
+% cd python-rwhoisd-0.1
+
+% ./bin/pyrwhoisd sample_data/example_schema \
+                  sample_data/example_data &
+
+Voila!  You should now have some sort of rwhois server running on port
+4321
+
+CONFIGURING IT
+
+Edit rwhoisd/config.py.
+This file is sort of commented as to what you can change.
+
+
+DATA
+
+See the example_schema and example_data files in the sample_data
+directory.
