@@ -22,9 +22,12 @@ max_limit = 256
 # if this is zero, you are allowing clients to disable query limits.
 min_limit = 0
 
+# If this is true, some logging will be done to stdout.
+verbose = False
 
 #### END Editable Configuration Options
 
 version = "0.1"
-banner_string = "%%rwhois V-1.5 %s (pyrwhoisd %s)" % (server_hostname, version)
+banner_string = "%%rwhois V-1.5 %s (python-rwhoisd %s)" % \
+                (server_hostname, version)
 

@@ -11,3 +11,4 @@ contact pub*
 contact "Pub*"
 network 11/8
 network foo=bar
+www.fddi.a.com
