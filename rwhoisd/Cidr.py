@@ -1,8 +1,6 @@
 # This file is part of python-rwhoisd
 #
-# Copyright (C) 2003, David E. Blacka
-#
-# $Id: Cidr.py,v 1.3 2003/04/28 16:43:19 davidb Exp $
+# Copyright (C) 2003, 2008 David E. Blacka
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +17,82 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-import socket, types, copy, bisect, re
+import socket, types, copy, bisect, re, struct
 
 class Cidr:
+    """A class representing a generic CIDRized network value."""    
+
+    def __str__(self):
+        return self.addr + "/" + str(self.netlen)
+
+    def __repr__(self):
+        return "<" + str(self) + ">"
+
+    def __cmp__(self, other):
+        """One CIDR network block is less than another if the start
+        address is numerically less or if the block is larger.  That
+        is, supernets will sort before subnets.  This ordering allows
+        for an efficient search for subnets of a given network."""
+
+        res = self._base_mask(self.numaddr) - self._base_mask(other.numaddr)
+        if res == 0: res = self.netlen - other.netlen
+        if res < 0: return -1
+        if res > 0: return 1
+        return 0
+
+    def calc(self):
+        """This method should be called after any change to the main
+        internal state: netlen or numaddr."""
+
+        # make sure the network length is valid
+        if not self._is_valid_netlen(netlen):
+            raise TypeError, "network length must be between 0 and %d" % (_max_netlen())
+
+        # convert the string ipv4 address to a 32bit number
+        self.numaddr = self._convert_ipstr(self.addr)
+        # calculate our netmask
+        self.mask = self._mask(self.netlen)
+        # force the cidr address into correct masked notation
+        self.numaddr &= self.mask
+
+        # convert the number back to a string to normalize the string
+        self.addr = self._convert_ipaddr(self.numaddr)
+
+    def is_supernet(self, other):
+        """returns True if the other Cidr object is a supernet (an
+        enclosing network block) of this one.  A Cidr object is a
+        supernet of itself."""
+        return other.numaddr & self.mask == self.numaddr
+
+    def is_subnet(self, other):
+        """returns True if the other Cidr object is a subnet (an
+        enclosednetwork block) of this one.  A Cidr object is a
+        subnet of itself."""
+        return self.numaddr & other.mask == other.numaddr
+
+    def netmask(self):
+        """return the netmask of this Cidr network"""
+        return self._convert_ipaddr(self.mask)
+    
+    def length(self):
+        """return the length (in number of addresses) of this network block"""
+        return netlen_to_length(self.netlen)
+
+    def end(self):
+        """return the last IP address in this network block"""
+        return self._convert_ipaddr(self.numaddr + self.length() - 1)
+
+    def to_netblock(self):
+        return (self.addr, self.end())
+
+    def clone(self):
+        # we can get away with a shallow copy (so far)
+        return copy.copy(self)
+
+class CidrV4(Cidr):
     """A class representing a CIDRized IPv4 network value.
 
-    Specifically, it is representing contiguous IPv4 network blocks
+    Specifically, it is representing a contiguous IPv4 network block
     that can be expressed as a ip-address/network-length pair."""
 
     # FIXME: we should probably actually make this class immutable and
@@ -44,12 +112,11 @@ class Cidr:
         if isinstance(address, int) and netlen >= 0:
             self.netlen = netlen
             self.numaddr = address
-            mask = self._mask(netlen)
-            self.numaddr &= mask
-            self.addr = self._convert_ip4addr(self.numaddr)
+            self.addr = self._convert_ipaddr(self.numaddr);
+            self.calc()
             return
         
-        if not Cidr.ip4addr_re.search(address):
+        if not CidrV4.ip4addr_re.search(address):
             raise ValueError, repr(address) + \
                   " is not a valid CIDR representation"
         
@@ -73,82 +140,21 @@ class Cidr:
 
         self.calc()
 
-    def __cmp__(self, other):
-        """One CIDR network block is less than another if the start
-        address is numerically less or if the block is larger.  That
-        is, supernets will sort before subnets.  This ordering allows
-        for an effienct search for subnets of a given network."""
+    def _base_mask(self, numaddr):
+        return numaddr & 0xFFFFFFFFL
 
-        # FIXME: have to convert to longs to overcome signedness problems.
-        #  There is probably a better way to do this.
-        res = (self.numaddr & 0xFFFFFFFFL) - (other.numaddr & 0xFFFFFFFFL)
-        if (res < 0 ): return -1
-        if (res > 0): return 1
-        res = self.netlen - other.netlen
-        return res
+    def _max_netlen(self):
+        return 32
 
-    def __str__(self):
-        return self.addr + "/" + str(self.netlen)
+    def _is_valid_netlen(self, netlen):
+        if self.netlen < 0: return False
+        if self.netlen > _max_netlen(): return False
+        return True
 
-    def __repr__(self):
-        return "<" + str(self) + ">"
+    def _convert_ipstr(self, addr):
+        return socket.inet_aton(addr)
 
-    def calc(self):
-        """This method should be called after any change to the main
-        internal state: netlen or numaddr."""
-
-        # make sure the network length is valid
-        if self.netlen > 32 or self.netlen < 0:
-            raise TypeError, "network length must be between 0 and 32"
-
-        # convert the string ipv4 address to a 32bit number
-        self.numaddr = self._convert_ip4str(self.addr)
-        # calculate our netmask
-        self.mask = self._mask(self.netlen)
-        # force the cidr address into correct masked notation
-        self.numaddr &= self.mask
-
-        # convert the number back to a string to normalize the string
-        self.addr = self._convert_ip4addr(self.numaddr)
-
-    def is_supernet(self, other):
-        """returns True if the other Cidr object is a supernet (an
-        enclosing network block) of this one.  A Cidr object is a
-        supernet of itself."""
-        return other.numaddr & self.mask == self.numaddr
-
-    def is_subnet(self, other):
-        """returns True if the other Cidr object is a subnet (an
-        enclosednetwork block) of this one.  A Cidr object is a
-        subnet of itself."""
-        return self.numaddr & other.mask == other.numaddr
-
-    def netmask(self):
-        """return the netmask of this Cidr network"""
-        return self._convert_ip4addr(self.mask)
-    
-    def length(self):
-        """return the length (in number of addresses) of this network block"""
-        return netlen_to_length(self.netlen)
-
-    def end(self):
-        """return the last IP address in this network block"""
-        return self._convert_ip4addr(self.numaddr + self.length() - 1)
-
-    def to_netblock(self):
-        return (self.addr, self.end())
-    
-    def _convert_ip4str(self, addr):
-        p = 3; a = 0
-        for octet in addr.split(".", 3):
-            o = int(octet);
-            if (o & 0xFF != o):
-                raise SyntaxWarning, "octet " + str(o) + " isn't in range"
-            a |= o << (p * 8)
-            p -= 1
-        return a
-
-    def _convert_ip4addr(self, numaddr):
+    def _convert_ipaddr(self, numaddr):
         res = str((numaddr & 0xFF000000) >> 24 & 0xFF) + "." + \
               str((numaddr & 0x00FF0000) >> 16) + "." + \
               str((numaddr & 0x0000FF00) >> 8) + "." + \
@@ -158,9 +164,63 @@ class Cidr:
     def _mask(self, len):
         return 0xFFFFFFFF << (32 - len)
 
-    def clone(self):
-        # we can get away with a shallow copy (so far)
-        return copy.copy(self)
+class CidrV6(Cidr):
+    """A class representing a CIDRized IPv6 network value.
+
+    Specifically, it is representing a contiguous IPv6 network block
+    that can be expressed as a ipv6-address/network-length pair."""
+    
+    ip6addr_re = re.compile("^[\da-f]{1,4}(:[\da-f]{1,4}){0,7}(::[\da-f])?(/\d{1,3})?$", re.I)
+    ip6_base_mask = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL # 128-bits of all ones.
+
+    def __init__(self, address, netlen = -1):
+        
+        if isinstance(address, long) and netlen >= 0:
+            self.netlen = netlen
+            self.numaddr = address
+            self.addr = self._convert_ipaddr(address)
+            self.calc()
+            return
+
+        if not CidrV6.ip6addr_re.search(address):
+            raise ValueError, repr(address) + \
+                "is not a valid CIDR representation"
+
+        if netlen < 0:
+            if type(address) == types.StringType:
+                if "/" in address:
+                    self.addr, self.netlen = address.split("/", 1)
+                else:
+                    self.addr, self.netlen = address, 128
+            elif type(address) == types.TupleType:
+                self.addr, self.netlen = address
+            else:
+                raise TypeError, "address must be a string or a tuple"
+        else:
+            self.addr = address
+            self.netlen = netlen
+
+        if type(self.netlen) == type.StringType:
+            self.netlen = int(self.netlen)
+        
+        self.calc()
+
+    def _base_mask(self, numaddr):
+        return numaddr & CidrV6.ip6_base_mask
+
+    def _convert_ipstr(self, addr):
+        packed_numaddr = socket.inet_pton(socket.AF_INET6, addr)
+        upper, lower = struct.unpack("!QQ", packed_numaddr);
+        numaddr = (upper << 64) | lower
+    
+    def _convert_ipaddr(self, numaddr):
+        upper = (numaddr & (ip6_base_mask << 64)) >> 64;
+        lower = numaddr & (ip6_base_mask >> 64)
+        packed_numaddr = struct.pack("!QQ", upper, lower)
+        return socket.inet_ntop(socket.AF_INET6, packed_numaddr)
+
+    def _mask(self, len):
+        return ip6_base_mask << (128 - len)
 
 
 def valid_cidr(address):

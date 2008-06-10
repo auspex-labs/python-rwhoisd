@@ -36,7 +36,7 @@ class MemDB:
         # string IDs, values are rwhoisobject instances.
         self.main_index = {}
 
-        # dictonary holding all of the seen attributes.  keys are
+        # dictionary holding all of the seen attributes.  keys are
         # lowercase attribute names, value is a character indicating
         # the index type (if indexed), or None if not indexed.  Index
         # type characters a 'N' for normal string index, 'C' for CIDR

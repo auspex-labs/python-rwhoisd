@@ -130,8 +130,8 @@ class CidrMemIndex(MemIndex):
     searching semantics."""
 
     # NOTE: this structure lends to fairly efficient exact searches
-    # (O[log2N]), effience subnet searches (also O[log2N]), but not
-    # terribly efficient supernet searches (O[32log2N]), because we
+    # (O[log2N]), efficient subnet searches (also O[log2N]), but not
+    # terribly efficient supernet searches (O[32 * log2N]), because we
     # have to potentially do 32 exact matches.  If we want efficient
     # supernet searches, we will probably have to use some sort of
     # general (i.e., not binary) search tree datastructure, as there
