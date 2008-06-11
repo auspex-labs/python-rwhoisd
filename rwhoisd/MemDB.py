@@ -157,7 +157,7 @@ class MemDB:
     def index_data(self):
         """Prepare the indexes for searching.  Currently, this isn't
         strictly necessary (the indexes will prepare themselves when
-        necessary), but it should elminate a penalty on initial
+        necessary), but it should eliminate a penalty on initial
         searches"""
 
         for i in self.indexes.values():

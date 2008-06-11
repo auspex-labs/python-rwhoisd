@@ -4,10 +4,11 @@ from distutils.core import setup
 import os
 
 setup(name="python-rwhoisd",
-      version="0.2",
+      version="0.4",
       description="A lightweight RWhois server written in Python",
       author="David Blacka",
       author_email="david@blacka.com",
+      url="http://blacka.com/software/python-rwhoisd",
       packages=['rwhoisd'],
       scripts=['bin/'+x for x in os.listdir('bin')
                if os.path.isfile('bin/'+x)],

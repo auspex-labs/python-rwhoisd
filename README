@@ -15,12 +15,12 @@ Ending a IP or CIDR query with a single "*" will result in a
 
 REQUIREMENTS
 
-python 2.2 or later
+python 2.4 or later
 
 INSTALL
 
-This can be run from it's source directory, which is the preferable
-way to do it.
+This can be run from it's source directory, which is a fine way to do
+it.
 
 However, if you wish to install it, as root:
 
@@ -38,9 +38,9 @@ RUNNING IT
 This is assuming that you are running it from the distribution
 directory.
 
-% tar zxvf python-rwhoisd-0.1.tar.gz
+% tar zxvf python-rwhoisd-0.4.tar.gz
 
-% cd python-rwhoisd-0.1
+% cd python-rwhoisd-0.4
 
 % ./bin/pyrwhoisd sample_data/example_schema \
                   sample_data/example_data &
@@ -75,6 +75,9 @@ following differences, however:
   wherever.
 
 * This server does not support attribute "aliases".
+
+* It doesn't quite support indexing network blocks (i.e., values like
+  "10.1.42.0 - 10.1.42.255").
 
 It should be noted that this server in small ways violates the
 description put forth by RFC 2167.  In particular, it does not
