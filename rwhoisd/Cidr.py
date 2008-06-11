@@ -162,6 +162,9 @@ class CidrV4(Cidr):
     Specifically, it is representing a contiguous IPv4 network block
     that can be expressed as a ip-address/network-length pair."""
 
+    base_mask = 0xFFFFFFFF
+    msb_mask  = 0x80000000
+
     def __init__(self, address, netlen = -1):
         """This takes either a formatted string in CIDR notation:
         (e.g., "127.0.0.1/32"), A tuple consisting of an formatting
@@ -179,7 +182,7 @@ class CidrV4(Cidr):
             return False
 
     def _base_mask(self, numaddr):
-        return numaddr & 0xFFFFFFFFL
+        return numaddr & CidrV4.base_mask
 
     def _max_netlen(self):
         return 32
@@ -193,8 +196,7 @@ class CidrV4(Cidr):
         return socket.inet_ntoa(packed_numaddr)
 
     def _mask(self, len):
-        return self._base_mask(0xFFFFFFFF << (32 - len))
-        
+        return self._base_mask(CidrV4.base_mask << (32 - len))
 
 class CidrV6(Cidr):
     """A class representing a CIDRized IPv6 network value.
@@ -202,9 +204,10 @@ class CidrV6(Cidr):
     Specifically, it is representing a contiguous IPv6 network block
     that can be expressed as a ipv6-address/network-length pair."""
     
-    ip6_base_mask  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL # 128-bits of all ones.
-    ip6_lower_mask = 0x0000000000000000FFFFFFFFFFFFFFFFL
-    ip6_upper_mask = 0xFFFFFFFFFFFFFFFF0000000000000000L
+    base_mask  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL # 128-bits of all ones.
+    msb_mask   = 0x80000000000000000000000000000000L
+    lower_mask = 0x0000000000000000FFFFFFFFFFFFFFFFL
+    upper_mask = 0xFFFFFFFFFFFFFFFF0000000000000000L
 
     def __init__(self, address, netlen = -1):
         
@@ -219,7 +222,7 @@ class CidrV6(Cidr):
             return False
 
     def _base_mask(self, numaddr):
-        return numaddr & CidrV6.ip6_base_mask
+        return numaddr & CidrV6.base_mask
 
     def _max_netlen(self):
         return 128
@@ -230,13 +233,13 @@ class CidrV6(Cidr):
         return (upper << 64) | lower
     
     def _convert_ipaddr(self, numaddr):
-        upper = (numaddr & CidrV6.ip6_upper_mask) >> 64;
-        lower = numaddr & CidrV6.ip6_lower_mask;
+        upper = (numaddr & CidrV6.upper_mask) >> 64;
+        lower = numaddr & CidrV6.lower_mask;
         packed_numaddr = struct.pack("!QQ", upper, lower)
         return socket.inet_ntop(socket.AF_INET6, packed_numaddr)
 
     def _mask(self, len):
-        return self._base_mask(CidrV6.ip6_base_mask << (128 - len))
+        return self._base_mask(CidrV6.base_mask << (128 - len))
 
 
 def valid_cidr(address):
@@ -256,25 +259,19 @@ def netblock_to_cidr(start, end):
     """Convert an arbitrary network block expressed as a start and end
     address (inclusive) into a series of valid CIDR blocks."""
 
-    def largest_prefix_v4(length):
+    def largest_prefix(length, max_netlen, msb_mask):
         # calculates the largest network length (smallest mask length)
         # that can fit within the block length.
         i = 1; v = length
-        while i <= 32:
-            if v & 0x80000000: break
+        while i <= max_netlen:
+            if v & msb_mask: break
             i += 1; v <<= 1
         return i
-    def largest_prefix_v6(length):
-        i = 1; v = length
-        while i <= 128:
-            if v & 0x80000000000000000000000000000000L: break
-            i += 1; v <<= 1
-        return i
-    def netlen_to_mask_v4(n):
+    def netlen_to_mask(n, max_netlen, base_mask):
         # convert the network length into its netmask
-        return ~((1 << (32 - n)) - 1)
-    def netlen_to_mask_v6(n):
-        return ~((1 << (128 -n)) - 1)
+        return ~((1 << (max_netlen - n)) - 1) & base_mask
+    def netlen_to_length(n, max_netlen, base_mask):
+        return 1 << (max_netlen - n) & base_mask
 
     # convert the start and ending addresses of the netblock to Cidr
     # object, mostly so we can get the numeric versions of their
@@ -285,42 +282,35 @@ def netblock_to_cidr(start, end):
     # if either the start or ending addresses aren't valid addresses,
     # quit now.
     if not cs or not ce:
-        print "Invalid start or end address"
         return None
     # if the start and ending addresses aren't in the same family, quit now
     if cs.is_ipv6() != ce.is_ipv6():
-        print "start and end address not same family"
         return None
     
-    if cs.is_ipv6():
-        largest_prefix = largest_prefix_v6
-        netlen_to_mask = netlen_to_mask_v6
-    else:
-        largest_prefix = largest_prefix_v4
-        netlen_to_mask = netlen_to_mask_v4
+    max_netlen = cs._max_netlen()
+    msb_mask = cs.msb_mask
+    base_mask = cs.base_mask
 
     # calculate the number of IP address in the netblock
     block_len = ce.numaddr - cs.numaddr
-    
     # calcuate the largest CIDR block size that fits
-    netlen = largest_prefix(block_len + 1)
+    netlen = largest_prefix(block_len + 1, max_netlen, msb_mask)
     
     res = []; s = cs.numaddr
     while block_len > 0:
-        mask = netlen_to_mask(netlen)
+        mask = netlen_to_mask(netlen, max_netlen, base_mask)
         # check to see if our current network length is valid
         if (s & mask) != s:
             # if not, shrink the network block size
             netlen += 1
             continue
         # otherwise, we have a valid CIDR block, so add it to the list
-        cv = Cidr.create(s, netlen)
         res.append(Cidr.create(s, netlen))
         # and setup for the next round:
-        cur_len = netlen_to_length(netlen)
+        cur_len = netlen_to_length(netlen, max_netlen, base_mask)
         s         += cur_len
         block_len -= cur_len
-        netlen = largest_prefix(block_len + 1)
+        netlen = largest_prefix(block_len + 1, max_netlen, msb_mask)
     return res
 
 # test driver
@@ -358,6 +348,15 @@ if __name__ == "__main__":
     clist.sort()
     print "sorted list of cidr object:\n  ", clist
 
+    k = Cidr.create("2001:3c01::1:0", 120)
+    print "supernet: ", str(j), " supernet of ", str(k), "? ", \
+        str(j.is_supernet(k))
+    print "supernet: ", str(k), " supernet of ", str(j), "? ", \
+        str(k.is_supernet(j))
+    print "subnet: ", str(j), " subnet of ", str(k), "? ", \
+        str(j.is_subnet(k))
+    print "subnet: ", str(k), " subnet of ", str(j), "? ", \
+        str(k.is_subnet(j))
 
     netblocks = [ ("192.168.10.0", "192.168.10.255"),
                   ("192.168.10.0", "192.168.10.63"),
@@ -365,7 +364,9 @@ if __name__ == "__main__":
                   ("24.33.41.22", "24.33.41.37"),
                   ("196.11.1.0", "196.11.30.255"),
                   ("192.247.1.0", "192.247.10.255"),
-                  ("3ffe:4:5::", "3ffe:4:5::ffff") ]
+                  ("10.131.43.3", "10.131.44.7"),
+                  ("3ffe:4:5::", "3ffe:4:5::ffff"),
+                  ("3ffe:4:5::", "3ffe:4:6::1")]
                   
     for start, end in netblocks:
         print "netblock %s - %s:" % (start, end)
