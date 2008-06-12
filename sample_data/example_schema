@@ -5,12 +5,13 @@
 ##   C = cidr index (for ip addresses and netblocks)
 ##   A = all, both a normal and a cidr index
 
-domain-name  = N
-email        = N
-host-name    = N
-ip-address   = C
-ip-network   = C
-last-name    = N
-name         = N
-network-name = N
-org-name     = N
+domain-name   = N
+email         = N
+host-name     = N
+ip-address    = C
+ip-network    = C
+network-block = C
+last-name     = N
+name          = N
+network-name  = N
+org-name      = N

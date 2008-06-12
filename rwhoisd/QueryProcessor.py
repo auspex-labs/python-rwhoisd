@@ -250,8 +250,6 @@ class QueryProcessor:
         max = session.limit
         if max: max += 1
 
-        print "process_query: max =", max
-        
         query_result = self.process_full_query(query, max)
 
         objects   = query_result.objects()

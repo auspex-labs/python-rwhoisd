@@ -13,9 +13,14 @@ the found subnets at or below the specified network will be returned.
 Ending a IP or CIDR query with a single "*" will result in a
 "supernet" search.
 
+It supports (as of v0.4) IPv6 CIDR networks and network blocks, and
+supports indexing network-block type values.  That is, you can index
+values like "10.131.10.0 - 10.131.11.255" and "3ffe:4:5::0 -
+3ffe:4:6::ffff".
+
 REQUIREMENTS
 
-python 2.4 or later
+python 2.2 or later.
 
 INSTALL
 
@@ -75,9 +80,6 @@ following differences, however:
   wherever.
 
 * This server does not support attribute "aliases".
-
-* It doesn't quite support indexing network blocks (i.e., values like
-  "10.1.42.0 - 10.1.42.255").
 
 It should be noted that this server in small ways violates the
 description put forth by RFC 2167.  In particular, it does not

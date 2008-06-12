@@ -34,6 +34,18 @@ Created: 20040315
 Updated: 20050704
 Updated-By: hostmaster@a.com
 
+ID: LOCAL-BLOCK-1.a.com
+Class-Name: network
+Auth-Area: a.com
+Network-Block: 192.168.1.0 - 192.168.2.255
+Network-Name: LOCAL-BLOCK-1
+Organization: 777.a.com
+Tech-Contact: 222.a.com
+Admin-Contact: 222.a.com
+Created: 20011224
+Updated: 20030505
+Updated-By: hostmaster@a.com
+
 ID:333.a.com
 Auth-Area:a.com
 Class-Name: domain
