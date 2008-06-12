@@ -421,8 +421,8 @@ if __name__ == "__main__":
 
     ci.add("127.0.0.1/24", "net-local-1");
     ci.add("127.0.0.1/32", "net-local-2");
-    ci.add(Cidr.Cidr.create("216.168.224.0", 22), "net-vrsn-1")
-    ci.add(Cidr.Cidr.create("216.168.252.1", 32), "net-vrsn-2")
+    ci.add(Cidr.new("216.168.224.0", 22), "net-vrsn-1")
+    ci.add(Cidr.new("216.168.252.1", 32), "net-vrsn-2")
     ci.add("24.36.191.0/24", "net-foo-c")
     ci.add("24.36.191.32/27", "net-foo-sub-c")
     ci.add("24.36/16", "net-foo-b")
@@ -431,11 +431,11 @@ if __name__ == "__main__":
     ci.add("48.12.6.0 - 48.12.6.95", "net-bar-1")
 
     print "finding exactly 127.0.0.0/24"
-    res = ci.find(Cidr.Cidr.create("127.0.0.0/24"))
+    res = ci.find(Cidr.new("127.0.0.0/24"))
     print res
 
     print "finding exactly 127.0.0.16/32"
-    res = ci.find(Cidr.Cidr.create("127.0.0.16/32"))
+    res = ci.find(Cidr.new("127.0.0.16/32"))
     print res
 
     print "finding exactly 3ffe:4:5:6::0/64"
@@ -443,19 +443,19 @@ if __name__ == "__main__":
     print res
 
     print "finding supernets of 127.0.0.16/32"
-    res = ci.find_supernets(Cidr.Cidr.create("127.0.0.16/32"))
+    res = ci.find_supernets(Cidr.new("127.0.0.16/32"))
     print res
 
     print "finding supernets of 24.36.191.32/27"
-    res = ci.find(Cidr.Cidr.create("24.36.191.32/27"), 1)
+    res = ci.find(Cidr.new("24.36.191.32/27"), 1)
     print res
 
     print "finding supernets of 24.36.191.33/27"
-    res = ci.find_supernets(Cidr.Cidr.create("24.36.191.33/27"))
+    res = ci.find_supernets(Cidr.new("24.36.191.33/27"))
     print res
 
     print "finding supernets of 24.36.191.64/27"
-    res = ci.find_supernets(Cidr.Cidr.create("24.36.191.64/27"))
+    res = ci.find_supernets(Cidr.new("24.36.191.64/27"))
     print res
 
     print "finding supernets of 3ffe:4:5:6:7::0/80"
@@ -467,7 +467,7 @@ if __name__ == "__main__":
     print res
 
     print "finding subnets of 127.0/16"
-    res = ci.find_subnets(Cidr.Cidr.create("127.0/16"))
+    res = ci.find_subnets(Cidr.new("127.0/16"))
     print res
 
     print "finding subnets of 3ffe:4::0/32"

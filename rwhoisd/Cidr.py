@@ -19,21 +19,26 @@
 
 import socket, types, copy, bisect, struct
 
-class Cidr:
-    """A class representing a generic CIDRized network value."""    
+def new(address, netlen = -1):
+    """Construct either a CidrV4 or CidrV6 object."""
 
-    @staticmethod
-    def create(address, netlen = -1):
-        """Construct either a CidrV4 or CidrV6 object."""
-        if isinstance(address, int):
-            return CidrV4(address, netlen)
-        if isinstance(address, long):
-            if address <= pow(2, 32):
-                return CidrV4(address, netlen)
-            return CidrV6(address, netlen)
-        if ":" in address:
-            return CidrV6(address, netlen)
+    # ints are probably v4 addresses.
+    if isinstance(address, int):
         return CidrV4(address, netlen)
+    # longs could be v4 addresses, but we will only assume so if the
+    # value is small.
+    if isinstance(address, long):
+        if address <= pow(2, 32):
+            return CidrV4(address, netlen)
+        return CidrV6(address, netlen)
+    # otherwise, a colon in the address is a dead giveaway.
+    if ":" in address:
+        return CidrV6(address, netlen)
+    return CidrV4(address, netlen)
+
+class Cidr:
+    """A class representing a generic CIDRized network value."""
+
 
 
     def _initialize(self, address, netlen):
@@ -122,7 +127,7 @@ class Cidr:
     def netmask(self):
         """return the netmask of this Cidr network"""
         return self._convert_ipaddr(self.mask)
-    
+
     def length(self):
         """return the length (in number of addresses) of this network block"""
         return 1 << (self._max_netlen() - self.netlen);
@@ -137,7 +142,7 @@ class Cidr:
     def clone(self):
         # we can get away with a shallow copy (so far)
         return copy.copy(self)
-    
+
     def is_ipv6(self):
         if isinstance(self, CidrV6): return True
         return False
@@ -170,9 +175,9 @@ class CidrV4(Cidr):
         (e.g., "127.0.0.1/32"), A tuple consisting of an formatting
         string IPv4 address and a numeric network length, or the same
         as two arguments."""
-        
+
         self._initialize(address, netlen)
-        
+
     def _is_valid_address(self, address):
         """Returns True if the address is a legal IPv4 address."""
         try:
@@ -203,14 +208,14 @@ class CidrV6(Cidr):
 
     Specifically, it is representing a contiguous IPv6 network block
     that can be expressed as a ipv6-address/network-length pair."""
-    
+
     base_mask  = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFL # 128-bits of all ones.
     msb_mask   = 0x80000000000000000000000000000000L
     lower_mask = 0x0000000000000000FFFFFFFFFFFFFFFFL
     upper_mask = 0xFFFFFFFFFFFFFFFF0000000000000000L
 
     def __init__(self, address, netlen = -1):
-        
+
         self._initialize(address, netlen)
 
     def _is_valid_address(self, address):
@@ -231,7 +236,7 @@ class CidrV6(Cidr):
         packed_numaddr = socket.inet_pton(socket.AF_INET6, addr)
         upper, lower = struct.unpack("!QQ", packed_numaddr);
         return (upper << 64) | lower
-    
+
     def _convert_ipaddr(self, numaddr):
         upper = (numaddr & CidrV6.upper_mask) >> 64;
         lower = numaddr & CidrV6.lower_mask;
@@ -250,7 +255,7 @@ def valid_cidr(address):
 
     if isinstance(address, Cidr): return address
     try:
-        c = Cidr.create(address)
+        c = new(address)
         return c
     except (ValueError, socket.error):
         return False
@@ -286,7 +291,7 @@ def netblock_to_cidr(start, end):
     # if the start and ending addresses aren't in the same family, quit now
     if cs.is_ipv6() != ce.is_ipv6():
         return None
-    
+
     max_netlen = cs._max_netlen()
     msb_mask = cs.msb_mask
     base_mask = cs.base_mask
@@ -295,7 +300,7 @@ def netblock_to_cidr(start, end):
     block_len = ce.numaddr - cs.numaddr
     # calcuate the largest CIDR block size that fits
     netlen = largest_prefix(block_len + 1, max_netlen, msb_mask)
-    
+
     res = []; s = cs.numaddr
     while block_len > 0:
         mask = netlen_to_mask(netlen, max_netlen, base_mask)
@@ -305,7 +310,7 @@ def netblock_to_cidr(start, end):
             netlen += 1
             continue
         # otherwise, we have a valid CIDR block, so add it to the list
-        res.append(Cidr.create(s, netlen))
+        res.append(new(s, netlen))
         # and setup for the next round:
         cur_len = netlen_to_length(netlen, max_netlen, base_mask)
         s         += cur_len
@@ -316,25 +321,25 @@ def netblock_to_cidr(start, end):
 # test driver
 if __name__ == "__main__":
     import sys
-    a = Cidr.create("127.00.000.1/24")
-    b = Cidr.create("127.0.0.1", 32)
-    c = Cidr.create("24.232.119.192", 26)
-    d = Cidr.create("24.232.119.0", 24)
-    e = Cidr.create("24.224.0.0", 11)
-    f = Cidr.create("216.168.111.0/27");
-    g = Cidr.create("127.0.0.2/31");
-    h = Cidr.create("127.0.0.16/32")
-    i = Cidr.create("3ffe:4:201e:beef::0/64");
-    j = Cidr.create("2001:3c01::/32")
+    a = new("127.00.000.1/24")
+    b = new("127.0.0.1", 32)
+    c = new("24.232.119.192", 26)
+    d = new("24.232.119.0", 24)
+    e = new("24.224.0.0", 11)
+    f = new("216.168.111.0/27");
+    g = new("127.0.0.2/31");
+    h = new("127.0.0.16/32")
+    i = new("3ffe:4:201e:beef::0/64");
+    j = new("2001:3c01::/32")
 
     print f.addr
     print j.addr
-    
+
     try:
-        bad = Cidr.create("24.261.119.0", 32)
+        bad = new("24.261.119.0", 32)
     except ValueError, x:
         print "error:", x
-    
+
     print "cidr:", a, "num addresses:", a.length(), "ending address", \
         a.end(), "netmask", a.netmask()
 
@@ -348,7 +353,7 @@ if __name__ == "__main__":
     clist.sort()
     print "sorted list of cidr object:\n  ", clist
 
-    k = Cidr.create("2001:3c01::1:0", 120)
+    k = new("2001:3c01::1:0", 120)
     print "supernet: ", str(j), " supernet of ", str(k), "? ", \
         str(j.is_supernet(k))
     print "supernet: ", str(k), " supernet of ", str(j), "? ", \
@@ -367,7 +372,7 @@ if __name__ == "__main__":
                   ("10.131.43.3", "10.131.44.7"),
                   ("3ffe:4:5::", "3ffe:4:5::ffff"),
                   ("3ffe:4:5::", "3ffe:4:6::1")]
-                  
+
     for start, end in netblocks:
         print "netblock %s - %s:" % (start, end)
         blocks = netblock_to_cidr(start, end)
