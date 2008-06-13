@@ -48,7 +48,7 @@ verbose = False
 
 #### END Editable Configuration Options
 
-version = "0.2"
+version = "0.4"
 banner_string = "%%rwhois V-1.5 %s (python-rwhoisd %s)" % \
                 (server_hostname, version)
 
