@@ -84,13 +84,16 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
             # we can skip blank lines.
             if not line:
                 continue
-            
-            if line.startswith("-"):
-                self.handle_directive(session, line)
-            else:
-                self.handle_query(session, line)
-                if not session.holdconnect:
-                    self.quit_flag = True
+        
+            try:
+                if line.startswith("-"):
+                    self.handle_directive(session, line)
+                else:
+                    self.handle_query(session, line)
+                    if not session.holdconnect:
+                        self.quit_flag = True
+            except Rwhois.RwhoisError, e:
+                self.handle_error(session, e)
 
             self.wfile.flush()
 
@@ -114,6 +117,10 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
             print "%s query %s" % (self.client_address, line)
         query_processor.process_query(session, line)
 
+    def handle_error(self, session, error):
+        code = error[0]
+        msg = error[1]
+        session.wfile.write(Rwhois.error_message((code, msg)))
 
 def usage(pname):
     print """\
