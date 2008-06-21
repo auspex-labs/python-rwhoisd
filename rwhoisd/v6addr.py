@@ -21,7 +21,7 @@ import socket, re, struct
 
 # a simplified regex that just makes sure that the IPv6 address string
 # isn't obviously invalid.
-v6char_re = re.compile(r'[0-9a-f:]+(:\d+\.\d+\.\d+\.\d+)?', re.I)
+v6char_re = re.compile(r'^[0-9a-f:]+(:(\d{1,3}\.){3}\d{1,3})?$', re.I)
 
 def v6str_to_addr(addrstr):
     """Convert IPv6 addresses into its packed numerical value."""
@@ -155,7 +155,7 @@ if __name__ == "__main__":
             a = v6str_to_addr(addr)
             b = v6addr_to_str(a)
         except socket.error, e:
-            print e
+            print "addr was invalid!:", e
         else:
             print "%s => %s" % (addr, b)
 
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     try_good_addr("1:2:3::7:8")
     try_good_addr("2001:3c09:102::23:af")
     try_good_addr("::ffff:1.2.3.4")
-    try_good_addr("1:2:3:4:5:6:7:4.3.2.1")
+    try_good_addr("1:2:3:4:5:6:4.3.2.1")
 
     def try_bad_addr(addr):
         try:
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         except socket.error, e:
             print e
         else:
-            print "addr was valid!", addr
+            print "addr was valid! %s => %s" % (addr, v6addr_to_str(a))
 
     # things that shouldn't parse
     try_bad_addr(":")
@@ -185,3 +185,4 @@ if __name__ == "__main__":
     try_bad_addr("::3::")
     try_bad_addr("::1.2.3")
     try_bad_addr("12345::1")
+    try_bad_addr("1:2:3:4:5:6:7:4.3.2.1")

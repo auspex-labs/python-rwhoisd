@@ -1,8 +1,6 @@
 # This file is part of python-rwhoisd
 #
-# Copyright (C) 2003, David E. Blacka
-#
-# $Id: RwhoisServer.py,v 1.3 2003/04/28 16:45:11 davidb Exp $
+# Copyright (C) 2003, 2008 David E. Blacka
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

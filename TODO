@@ -1,0 +1,32 @@
+This is just a simple list of tasks that could be done for
+python-rwhoisd.
+
+
+* Get it working on Windows.
+
+  One of the (few) reasons folks might want to use this RWhois server
+  is that they want to run the server on Windows and think that this
+  one might be easier to get working that the C version.
+
+** Get it to run with the standard command line Window's python.
+
+** Make it a bit more friendly to run.
+
+* Create proper unit tests.
+
+  The code has some relatively decent unit tests embedded in the
+  modules, but these should be separated out and be converted to use
+  unittest.
+
+* Create a BSDDB index.
+
+  This server can't handle a lot of data.  It loads everything into
+  memory and isn't particularly efficient about it.  It is written in
+  python, after all.
+
+  Anyway, the basic way that the in-memory indexes maps fairly well to
+  a bsddb btree indexes.  Differences (besides just actual
+  implementation) is that it is probably easier to just use strings
+  for ordering, which means that IPv6 CIDR indexes would have to be in
+  separate btrees from the v4 indexes.
+

@@ -18,6 +18,7 @@
 # USA
 
 import socket, types, copy, bisect, struct
+import v6addr
 
 def new(address, netlen = -1):
     """Construct either a CidrV4 or CidrV6 object."""
@@ -38,8 +39,6 @@ def new(address, netlen = -1):
 
 class Cidr:
     """A class representing a generic CIDRized network value."""
-
-
 
     def _initialize(self, address, netlen):
         """This a common constructor that is used by the subclasses."""
