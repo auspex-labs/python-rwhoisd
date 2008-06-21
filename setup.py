@@ -4,7 +4,7 @@ from distutils.core import setup
 import os
 
 setup(name="python-rwhoisd",
-      version="0.4",
+      version="0.4.1",
       description="A lightweight RWhois server written in Python",
       author="David Blacka",
       author_email="david@blacka.com",

@@ -2,8 +2,6 @@
 #
 # Copyright (C) 2003, David E. Blacka
 #
-# $Id: config.py,v 1.3 2003/04/28 16:44:29 davidb Exp $
-#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
@@ -48,7 +46,7 @@ verbose = False
 
 #### END Editable Configuration Options
 
-version = "0.4"
+version = "0.4.1"
 banner_string = "%%rwhois V-1.5 %s (python-rwhoisd %s)" % \
                 (server_hostname, version)
 
