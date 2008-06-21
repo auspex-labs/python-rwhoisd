@@ -1,16 +1,22 @@
+-*- text -*-
+
 This is just a simple list of tasks that could be done for
 python-rwhoisd.
-
 
 * Get it working on Windows.
 
   One of the (few) reasons folks might want to use this RWhois server
   is that they want to run the server on Windows and think that this
-  one might be easier to get working that the C version.
+  one might be easier to get working than the C version.
 
 ** Get it to run with the standard command line Window's python.
 
+!! This is done as of v0.4.1.
+
 ** Make it a bit more friendly to run.
+
+   Not really being a Windows user, I'm not really sure what needs to
+   be done here.
 
 * Create proper unit tests.
 
