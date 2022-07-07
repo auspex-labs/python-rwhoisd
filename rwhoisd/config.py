@@ -16,12 +16,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
-
 """Server global variables should be set here."""
 
 import socket
 
-##### Editable Configuration Options
+# Editable Configuration Options
 
 # the port to listen on.
 port = 4321
@@ -44,9 +43,8 @@ min_limit = 0
 # If this is true, some logging will be done to stdout.
 verbose = False
 
-#### END Editable Configuration Options
+# END Editable Configuration Options
 
 version = "0.4.1"
-banner_string = "%%rwhois V-1.5 %s (python-rwhoisd %s)" % \
-                (server_hostname, version)
-
+banner_string = "%%rwhois V-1.5 %s (python-rwhoisd %s)" % (server_hostname,
+                                                           version)

@@ -17,8 +17,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-import bisect, types
+import bisect
+import types
 import Cidr
+
 
 class MemIndex:
     """This class implements a simple in-memory key-value map.  This
@@ -81,7 +83,8 @@ class MemIndex:
         """Put the map in a prepared state, if necessary."""
 
         n = len(self.index)
-        if not n: return
+        if not n:
+            return
         if not self.sorted:
             self.index.sort()
             # unique the index
@@ -115,13 +118,15 @@ class MemIndex:
         search_el, i = self._find(key)
         res = []
         while i < len(self.index):
-            if max and len(res) == max: break
+            if max and len(res) == max:
+                break
             if search_el.equals(self.index[i], prefix_match):
                 res.append(self.index[i].value)
                 i += 1
             else:
                 break
         return res
+
 
 class CidrMemIndex(MemIndex):
     """This is an in-memory map that has been extended to support CIDR
@@ -183,28 +188,30 @@ class CidrMemIndex(MemIndex):
         return
 
     def is_netblock(self, key):
-        if "-" in key: return True
+        if "-" in key:
+            return True
         return False
 
     def parse_netblock(self, key):
-        start, end = key.split("-", 1);
+        start, end = key.split("-", 1)
         start = start.strip()
         end = end.strip()
 
         return Cidr.netblock_to_cidr(start, end)
 
-    def find_exact(self, key, max = 0):
+    def find_exact(self, key, max=0):
 
         key = Cidr.valid_cidr(key)
         search_el, i = self._find(key)
         res = []
         while i < len(self.index) and self.index[i].key == key:
             res.append(self.index[i].value)
-            if max and len(res) == max: break
+            if max and len(res) == max:
+                break
             i += 1
         return res
 
-    def find_subnets(self, key, max = 0):
+    def find_subnets(self, key, max=0):
         """Return all values that are subnets of 'key', including any
         that match 'key' itself."""
 
@@ -213,12 +220,13 @@ class CidrMemIndex(MemIndex):
 
         res = set()
         while i < len(self.index) and self.index[i].key.is_subnet(key):
-            if max and len(res) == max: break
+            if max and len(res) == max:
+                break
             res.add(self.index[i].value)
             i += 1
         return list(res)
 
-    def find_supernets(self, key, max = 0):
+    def find_supernets(self, key, max=0):
         """Return all values that are supernets of 'key', including
         any that match 'key' itself."""
 
@@ -231,7 +239,6 @@ class CidrMemIndex(MemIndex):
             if max and len(res) >= max:
                 return res[:max]
             k.netlen -= 1
-
 
         return res
 
@@ -259,6 +266,7 @@ class CidrMemIndex(MemIndex):
         # for now, a prefix match means all supernets
         return self.find_supernets(key, max)
 
+
 class ComboMemIndex:
     """This is an in-memory map that contains both a normal string
     index and a CIDR index.  Valid CIDR values we be applied against
@@ -267,9 +275,9 @@ class ComboMemIndex:
 
     def __init__(self):
         self.normal_index = MemIndex()
-        self.cidr_index   = CidrMemIndex()
+        self.cidr_index = CidrMemIndex()
 
-    def add(self, key, value = None):
+    def add(self, key, value=None):
         """Add a key,value pair to the correct map.  See MemIndex for
         the behavior of this method"""
 
@@ -323,7 +331,7 @@ class ComboMemIndex:
             return self.cidr_index.find(c, prefix_match, max)
         return self.normal_index.find(key, prefix_match, max)
 
-    def find_exact(self, key, max = 0):
+    def find_exact(self, key, max=0):
         """Return a list of values whose keys match 'key'.  if 'key'
         is not a CIDR value, then this is the same as find()."""
 
@@ -332,36 +340,39 @@ class ComboMemIndex:
             return self.cidr_index.find_exact(c, max)
         return self.normal_index.find(key, False, max)
 
-    def find_subnets(self, key, max = 0):
+    def find_subnets(self, key, max=0):
         """If 'key' is a CIDR value (either a Cidr object or a valid
         CIDR string representation, do a find_subnets on the internal
         CidrMemIndex, otherwise return None."""
 
         c = Cidr.valid_cidr(key)
-        if c: return self.cidr_index.find_subnets(key, max)
+        if c:
+            return self.cidr_index.find_subnets(key, max)
         return None
 
-    def find_supernets(self, key, max = 0):
+    def find_supernets(self, key, max=0):
         """If 'key' is a CIDR value (either a Cidr object or a valid
         CIDR string representation, do a find_supernets on the internal
         CidrMemIndex, otherwise return None."""
 
         c = Cidr.valid_cidr(key)
-        if c: return self.cidr_index.find_supernets(key, max)
+        if c:
+            return self.cidr_index.find_supernets(key, max)
         return None
+
 
 class element:
     """This is the base element class.  It basically exists to
     simplify sorting."""
 
     def __init__(self, key, value):
-        self.key   = key
+        self.key = key
         self.value = value
 
     def __cmp__(self, other):
         """Compare only on the key."""
 
-        if not type(self.key) == type(other.key):
+        if not isinstance(self.key, type(other.key)):
             print "other is incompatible type?", repr(other.key), other.key
         if self.key < other.key:
             return -1
@@ -384,14 +395,16 @@ class element:
         return self.key == other.key
 
     def total_equals(self, other):
-        if not isinstance(other, type(self)): return False
+        if not isinstance(other, type(self)):
+            return False
         return self.key == other.key and self.value == other.value
+
 
 if __name__ == "__main__":
 
-    source = [ ("foo", "foo-id"), ("bar", "bar-id"), ("baz", "baz-id"),
-               ("foobar", "foo-id-2"), ("barnone", "bar-id-2"),
-               ("zygnax", "z-id") ]
+    source = [("foo", "foo-id"), ("bar", "bar-id"), ("baz", "baz-id"),
+              ("foobar", "foo-id-2"), ("barnone", "bar-id-2"),
+              ("zygnax", "z-id")]
 
     mi = MemIndex()
     mi.addlist(source)
@@ -417,8 +430,8 @@ if __name__ == "__main__":
 
     ci = CidrMemIndex()
 
-    ci.add("127.0.0.1/24", "net-local-1");
-    ci.add("127.0.0.1/32", "net-local-2");
+    ci.add("127.0.0.1/24", "net-local-1")
+    ci.add("127.0.0.1/32", "net-local-2")
     ci.add(Cidr.new("216.168.224.0", 22), "net-vrsn-1")
     ci.add(Cidr.new("216.168.252.1", 32), "net-vrsn-2")
     ci.add("24.36.191.0/24", "net-foo-c")

@@ -17,9 +17,12 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-import bisect, types
-import MemIndex, Cidr
+import bisect
+import types
+import MemIndex
+import Cidr
 from Rwhois import rwhoisobject
+
 
 class MemDB:
 
@@ -45,7 +48,7 @@ class MemDB:
         # This exists so unconstrained searches can just iterate over
         # them.
         self.normal_indexes = []
-        self.cidr_indexes   = []
+        self.cidr_indexes = []
 
         # dictonary holding all of the seen class names.  keys are
         # lowercase classnames, value is always None.
@@ -69,17 +72,18 @@ class MemDB:
 
         # initialize base schema
 
-        self.attrs['id']         = "N"
-        self.attrs['auth-area']  = None
+        self.attrs['id'] = "N"
+        self.attrs['auth-area'] = None
         self.attrs['class-name'] = None
-        self.attrs['updated']    = None
+        self.attrs['updated'] = None
         self.attrs['referred-auth-area'] = "R"
 
         sf = open(schema_file, "r")
 
-        for line in sf.xreadlines():
+        for line in sf:
             line = line.strip()
-            if not line or line.startswith("#"): continue
+            if not line or line.startswith("#"):
+                continue
 
             attr, it = line.split("=")
             self.attrs[attr.strip().lower()] = it.strip()[0].upper()
@@ -110,12 +114,13 @@ class MemDB:
 
         # add the object to the main index
         id = obj.getid()
-        if not id: return
+        if not id:
+            return
         id = id.lower()
 
         self.main_index[id] = obj
 
-        for a,v in obj.items():
+        for a, v in obj.items():
             # note the attribute.
             index_type = self.attrs.setdefault(a, None)
             v = v.lower()
@@ -136,9 +141,10 @@ class MemDB:
         df = open(data_file, "r")
         obj = rwhoisobject()
 
-        for line in df.xreadlines():
+        for line in df:
             line = line.strip()
-            if line.startswith("#"): continue
+            if line.startswith("#"):
+                continue
             if not line or line.startswith("---"):
                 # we've reached the end of an object, so index it.
                 self.add_object(obj)
@@ -163,7 +169,7 @@ class MemDB:
         return
 
     def is_attribute(self, attr):
-        return self.attrs.has_key(attr.lower())
+        return attr.lower() in self.attrs
 
     def is_indexed_attr(self, attr):
         if self.is_attribute(attr):
@@ -171,20 +177,18 @@ class MemDB:
         return False
 
     def is_objectclass(self, objectclass):
-        return self.classes.has_key(objectclass.lower())
+        return objectclass.lower() in self.classes
 
     def is_autharea(self, aa):
-        return self.authareas.has_key(aa.lower())
+        return aa.lower() in self.authareas
 
     def get_authareas(self):
         return self.authareas.keys()
-    
+
     def fetch_objects(self, id_list):
-        return [ self.main_index[x] for x in id_list
-                 if self.main_index.has_key(x) ]
+        return [self.main_index[x] for x in id_list if x in self.main_index]
 
-    def search_attr(self, attr, value, max = 0):
-
+    def search_attr(self, attr, value, max=0):
         """Search for a value in a particular attribute's index.  If
         the attribute is cidr indexed, an attempt to convert value
         into a Cidr object will be made.  Returns a list of object ids
@@ -193,7 +197,8 @@ class MemDB:
         attr = attr.lower()
         index_type = self.attrs.get(attr)
         index = self.indexes.get(attr)
-        if not index: return []
+        if not index:
+            return []
 
         super_prefix_match = False
         if value.endswith("**"):
@@ -215,7 +220,7 @@ class MemDB:
         res = index.find(value, prefix_match, max)
         return IndexResult(res)
 
-    def search_normal(self, value, max = 0):
+    def search_normal(self, value, max=0):
         """Search for a value in the 'normal' (string keyed) indexes.
         Returns a list of object ids, or an empty list if nothing was
         found."""
@@ -230,7 +235,7 @@ class MemDB:
                     return res
         return res
 
-    def search_cidr(self, value, max = 0):
+    def search_cidr(self, value, max=0):
         """Search for a value in the cidr indexes.  Returns a list of
         object ids, or an empty list if nothing was found."""
 
@@ -243,7 +248,7 @@ class MemDB:
                     return res
         return res
 
-    def search_referral(self, value, max = 0):
+    def search_referral(self, value, max=0):
         """Given a heirarchal value, search for referrals.  Returns a
         list of object ids or an empty list."""
 
@@ -252,19 +257,22 @@ class MemDB:
     def object_iterator(self):
         return self.main_index.itervalues()
 
+
 class IndexResult:
+
     def __init__(self, list=None):
-        if not list: list = []
+        if not list:
+            list = []
         self.data = list
         self._dict = dict(zip(self.data, self.data))
 
     def __len__(self):
         return len(self.data)
-    
+
     def extend(self, list):
         if isinstance(list, type(self)):
             list = list.list()
-        new_els = [ x for x in list if not self._dict.has_key(x) ]
+        new_els = [x for x in list if x not in self._dict]
         self.data.extend(new_els)
         self._dict.update(dict(zip(new_els, new_els)))
 
@@ -273,7 +281,8 @@ class IndexResult:
 
     def truncate(self, n=0):
         to_del = self.data[n:]
-        for i in to_del: del self._dict[i]
+        for i in to_del:
+            del self._dict[i]
         self.data = self.data[:n]
 
 
@@ -300,24 +309,24 @@ if __name__ == "__main__":
         print "   %s" % a
 
     print "Is 'Network' a class?", db.is_objectclass("Network")
-        
-#    for k, v in db.main_index.items():
-#        print "main_index[", k, "]:", v
+
+    #    for k, v in db.main_index.items():
+    #        print "main_index[", k, "]:", v
 
     print "searching for a.com"
     res = db.search_attr("domain-name", "a.com")
     print res.list()
-    print [ str(x) for x in db.fetch_objects(res.list()) ]
+    print[str(x) for x in db.fetch_objects(res.list())]
 
     print "searching for doe"
     res = db.search_normal("doe")
     print res.list()
-    print [ str(x) for x in db.fetch_objects(res.list()) ]
+    print[str(x) for x in db.fetch_objects(res.list())]
 
     print "searching for 10.0.0.2"
     res = db.search_cidr("10.0.0.2")
     print res.list()
-    print [ str(x) for x in db.fetch_objects(res.list()) ]
+    print[str(x) for x in db.fetch_objects(res.list())]
 
     print "searching for fddi.a.com"
     res = db.search_normal("fddi.a.com")
@@ -326,6 +335,4 @@ if __name__ == "__main__":
     print "searching referral index for fddi.a.com"
     res = db.search_attr("referred-auth-area", "fddi.a.com")
     print res.list()
-    print [ str(x) for x in db.fetch_objects(res.list()) ]
-
-
+    print[str(x) for x in db.fetch_objects(res.list())]

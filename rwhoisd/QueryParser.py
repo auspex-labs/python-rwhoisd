@@ -17,22 +17,17 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-
 # queryparser.db must be set to a DB class instance.
+import Rwhois
+import yacc
+import types
+import lex
+
 db = None
 
 # Define the Lexer for the RWhois query language
 
-tokens = (
-    'VALUE',
-    'QUOTEDVALUE',
-    'CLASS',
-    'ATTR',
-    'AND',
-    'OR',
-    'EQ',
-    'NEQ'
-    )
+tokens = ('VALUE', 'QUOTEDVALUE', 'CLASS', 'ATTR', 'AND', 'OR', 'EQ', 'NEQ')
 
 # whitespace
 t_ignore = ' \t'
@@ -45,6 +40,7 @@ t_NEQ = r'!='
 # I kind of wonder if anyone would ever notice this.
 t_QUOTEDVALUE = r'["\']\*?[^"*\n]+\*{0,2}["\']'
 
+
 def t_firstvalue(t):
     r'^\*?[^\s"\'=*]+\*{0,2}'
 
@@ -53,6 +49,7 @@ def t_firstvalue(t):
     else:
         t.type = 'VALUE'
     return t
+
 
 def t_VALUE(t):
     r'\*?[^\s"\'=!*]+\*{0,2}'
@@ -78,8 +75,8 @@ def t_error(t):
     # t.type = 'ERR'
     # t.skip(1)
 
+
 # initalize the lexer
-import lex
 lex.lex()
 
 # Define the parser for the query language
@@ -89,11 +86,13 @@ lex.lex()
 # 'query' productions are Query objects
 # 'total' productions are Query objects
 
+
 def p_total_class_query(t):
     'total : CLASS query'
 
     t[0] = t[2]
     t[0].set_class(t[1])
+
 
 def p_total_query(t):
     'total : query'
@@ -107,17 +106,19 @@ def p_query_oper_querystr(t):
 
     t[0] = t[1]
     if t[2] == 'OR':
-        t[0].cur_clause  = [ t[3] ]
+        t[0].cur_clause = [t[3]]
         t[0].clauses.append(t[0].cur_clause)
     else:
         t[0].cur_clause.append(t[3])
+
 
 def p_query_querystr(t):
     'query : querystr'
 
     t[0] = Query()
-    t[0].cur_clause = [ t[1] ]
+    t[0].cur_clause = [t[1]]
     t[0].clauses.append(t[0].cur_clause)
+
 
 def p_querystr_attr_value(t):
     '''querystr : ATTR EQ value
@@ -125,10 +126,12 @@ def p_querystr_attr_value(t):
 
     t[0] = (t[1], t[2], t[3])
 
+
 def p_querystr_attr(t):
     'querystr : ATTR'
 
     t[0] = (None, '=', t[1])
+
 
 def p_querystr_value(t):
     'querystr : value'
@@ -143,6 +146,7 @@ def p_value(t):
     if t[1]:
         t[0] = t[1]
 
+
 def p_quotedvalue(t):
     'value : QUOTEDVALUE'
 
@@ -150,20 +154,19 @@ def p_quotedvalue(t):
 
 
 def p_error(t):
-     # print "Syntax error at '%s:%s'" % (t.type, t.value)
-     raise yacc.YaccError, "Syntax error at %r" % t.value
+    # print "Syntax error at '%s:%s'" % (t.type, t.value)
+    raise yacc.YaccError, "Syntax error at %r" % t.value
 
-    
-import types
+
 class Query:
     """A representation of a parsed RWhois query."""
-    
+
     def __init__(self):
-        self.clauses     = []
-        self.cur_clause  = None
+        self.clauses = []
+        self.cur_clause = None
         self.objectclass = None
-        self.prepared    = False
-        
+        self.prepared = False
+
     def __str__(self):
         self._prepare()
         res = ''
@@ -180,8 +183,9 @@ class Query:
     def _prepare(self):
         """Prepare the query for use.  For now, this means propagating
         an objectclass restriction to all query clauses."""
-        
-        if self.prepared: return
+
+        if self.prepared:
+            return
         if self.objectclass:
             for c in self.clauses:
                 c.append(("class-name", "=", self.objectclass))
@@ -190,9 +194,9 @@ class Query:
         """Return the query clauses.  This is a list of AND clauses,
         which are, in turn, lists of query terms.  Query terms are 3
         element tuples: (attr, op, value)."""
-        
+
         return self.clauses
-    
+
     def set_class(self, objectclass):
         """Set the query-wide objectclass restriction."""
 
@@ -205,14 +209,12 @@ class Query:
         return
 
 
-import yacc
-import Rwhois
-
 def get_parser():
     """Return a parser instances.  Parser objects should not be shared
     amongst threads."""
 
     return yacc.yacc()
+
 
 def parse(p, query):
     """Parse a query, raising a RwhoisError in case of parse failure.
@@ -225,6 +227,7 @@ def parse(p, query):
         return p.parse(query)
     except (lex.LexError, yacc.YaccError):
         raise Rwhois.RwhoisError, (350, "")
+
 
 if __name__ == "__main__":
     import sys
@@ -241,24 +244,22 @@ if __name__ == "__main__":
 
     db = mydb
     qp = get_parser()
-    
+
     for line in sys.stdin.readlines():
         line = line.rstrip('\n')
         line = line.strip()
-        if not line: continue
-        print 'inputting:', `line`
+        if not line:
+            continue
+        print 'inputting:', repr(line)
         try:
             res = qp.parse(line)
             print repr(res)
-        except (lex.LexError, yacc.YaccError), x:
+        except (lex.LexError, yacc.YaccError) as x:
             print "parse error occurred:", x
             print "query:", line
-
 
 #         lex.input(line)
 #         while 1:
 #             tok = lex.token()
 #             if not tok: break
 #             print tok
-        
-    

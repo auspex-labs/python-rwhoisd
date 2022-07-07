@@ -17,18 +17,25 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-import sys, socket, SocketServer
+import sys
+import socket
+import SocketServer
 
-import config, Session
-import QueryParser, QueryProcessor, DirectiveProcessor, Rwhois
-
+import config
+import Session
+import QueryParser
+import QueryProcessor
+import DirectiveProcessor
+import Rwhois
 
 # server-wide variables
 
-query_processor     = None
+query_processor = None
 directive_processor = None
 
+
 class RwhoisTCPServer(SocketServer.ThreadingTCPServer):
+
     def __init__(self, server_address, RequestHandlerClass):
         self.allow_reuse_address = True
         SocketServer.TCPServer.__init__(self, server_address,
@@ -38,6 +45,7 @@ class RwhoisTCPServer(SocketServer.ThreadingTCPServer):
         # implement access control here
         return True
 
+
 class RwhoisHandler(SocketServer.StreamRequestHandler):
 
     def readline(self):
@@ -46,7 +54,8 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
         # return self.rfile.readline()
 
         data = self.request.recv(1024)
-        if not data: return None
+        if not data:
+            return None
 
         lines = data.splitlines(True)
 
@@ -56,14 +65,14 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
             print "%s discarding additional input lines: %r" \
                   % (self.client_address, lines)
         return lines[0]
-        
+
     def handle(self):
 
         self.quit_flag = False
 
         # output a banner
-        self.wfile.write(config.banner_string);
-        self.wfile.write("\r\n");
+        self.wfile.write(config.banner_string)
+        self.wfile.write("\r\n")
 
         # get a session.
         session = Session.Context()
@@ -71,18 +80,19 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
         session.wfile = self.wfile
 
         if config.verbose:
-            print "%s accepted connection" % (self.client_address,)
+            print "%s accepted connection" % (self.client_address, )
 
         c = 0
-        while 1:
+        while True:
             line = self.readline()
-            if not line: break
+            if not line:
+                break
 
             line = line.strip()
             # we can skip blank lines.
             if not line:
                 continue
-        
+
             try:
                 if line.startswith("-"):
                     self.handle_directive(session, line)
@@ -90,16 +100,17 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
                     self.handle_query(session, line)
                     if not session.holdconnect:
                         self.quit_flag = True
-            except Rwhois.RwhoisError, e:
+            except Rwhois.RwhoisError as e:
                 self.handle_error(session, e)
 
             self.wfile.flush()
 
             # check to see if we were asked to quit
-            if self.quit_flag: break
+            if self.quit_flag:
+                break
 
         if config.verbose:
-            print "%s disconnected" %  (self.client_address,)
+            print "%s disconnected" % (self.client_address, )
 
     def handle_directive(self, session, line):
         if config.verbose:
@@ -120,12 +131,14 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
         msg = error[1]
         session.wfile.write(Rwhois.error_message((code, msg)))
 
+
 def usage(pname):
     print """\
 usage: %s [-v] schema_file data_file [data_file ...]
        -v: verbose """ % pname
     sys.exit(64)
-    
+
+
 def init(argv):
     import MemDB
     import getopt
@@ -135,11 +148,11 @@ def init(argv):
     for o, a in opts:
         if o == "-v":
             config.verbose = True
-    
-    if len(argv) < 2: usage(pname)
-    schema_file = argv[0]
-    data_files  = argv[1:]
 
+    if len(argv) < 2:
+        usage(pname)
+    schema_file = argv[0]
+    data_files = argv[1:]
 
     db = MemDB.MemDB()
 
@@ -151,9 +164,10 @@ def init(argv):
     QueryParser.db = db
 
     global query_processor, directive_processor
-    
-    query_processor     = QueryProcessor.QueryProcessor(db)
+
+    query_processor = QueryProcessor.QueryProcessor(db)
     directive_processor = DirectiveProcessor.DirectiveProcessor(db)
+
 
 def serve():
     # initialize the TCP server
@@ -171,8 +185,8 @@ def serve():
 
     sys.exit(0)
 
+
 if __name__ == "__main__":
 
     init(sys.argv)
     serve()
-
