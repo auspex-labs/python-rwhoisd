@@ -16,16 +16,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
-
-import bisect
-import types
-import MemIndex
 import Cidr
+import MemIndex
 from Rwhois import rwhoisobject
 
 
 class MemDB:
-
     def __init__(self):
 
         # a dictonary holding the various attribute indexes.  The keys
@@ -72,13 +68,13 @@ class MemDB:
 
         # initialize base schema
 
-        self.attrs['id'] = "N"
-        self.attrs['auth-area'] = None
-        self.attrs['class-name'] = None
-        self.attrs['updated'] = None
-        self.attrs['referred-auth-area'] = "R"
+        self.attrs["id"] = "N"
+        self.attrs["auth-area"] = None
+        self.attrs["class-name"] = None
+        self.attrs["updated"] = None
+        self.attrs["referred-auth-area"] = "R"
 
-        sf = open(schema_file, "r")
+        sf = open(schema_file)
 
         for line in sf:
             line = line.strip()
@@ -125,9 +121,9 @@ class MemDB:
             index_type = self.attrs.setdefault(a, None)
             v = v.lower()
             # make sure that we note the auth-area and class
-            if a == 'auth-area':
+            if a == "auth-area":
                 self.authareas.setdefault(v, None)
-            elif a == 'class-name':
+            elif a == "class-name":
                 self.classes.setdefault(v, None)
 
             if index_type:
@@ -138,7 +134,7 @@ class MemDB:
         """Load data from rwhoisd-style TXT files (i.e., attr:value,
         records separated with a "---" bare line)."""
 
-        df = open(data_file, "r")
+        df = open(data_file)
         obj = rwhoisobject()
 
         for line in df:
@@ -209,12 +205,12 @@ class MemDB:
             value = value.rstrip("*")
             prefix_match = True
 
-        if index_type == 'C' and not isinstance(value, Cidr.Cidr):
+        if index_type == "C" and not isinstance(value, Cidr.Cidr):
             value = Cidr.valid_cidr(value)
         else:
             value = value.strip().lower()
 
-        if index_type == 'C' and super_prefix_match:
+        if index_type == "C" and super_prefix_match:
             return index.find_subnets(value, max)
 
         res = index.find(value, prefix_match, max)
@@ -259,7 +255,6 @@ class MemDB:
 
 
 class IndexResult:
-
     def __init__(self, list=None):
         if not list:
             list = []
@@ -289,50 +284,51 @@ class IndexResult:
 # test driver
 if __name__ == "__main__":
     import sys
+
     db = MemDB()
 
-    print "loading schema:", sys.argv[1]
+    print("loading schema:", sys.argv[1])
     db.init_schema(sys.argv[1])
     for data_file in sys.argv[2:]:
-        print "loading data file:", data_file
+        print("loading data file:", data_file)
         db.load_data(data_file)
     db.index_data()
 
-    print "Schema: authority areas"
+    print("Schema: authority areas")
     for a in db.authareas.keys():
-        print "   %s" % a
-    print "Schema: classes"
+        print("   %s") % a
+    print("Schema: classes")
     for c in db.classes.keys():
-        print "   %s" % c
-    print "Schema: attributes"
+        print("   %s") % c
+    print("Schema: attributes")
     for a in db.attrs.keys():
-        print "   %s" % a
+        print("   %s") % a
 
-    print "Is 'Network' a class?", db.is_objectclass("Network")
+    print("Is 'Network' a class?", db.is_objectclass("Network"))
 
     #    for k, v in db.main_index.items():
     #        print "main_index[", k, "]:", v
 
-    print "searching for a.com"
+    print("searching for a.com")
     res = db.search_attr("domain-name", "a.com")
-    print res.list()
-    print[str(x) for x in db.fetch_objects(res.list())]
+    print(res.list())
+    print([str(x) for x in db.fetch_objects(res.list())])
 
-    print "searching for doe"
+    print("searching for doe")
     res = db.search_normal("doe")
-    print res.list()
-    print[str(x) for x in db.fetch_objects(res.list())]
+    print(res.list())
+    print([str(x) for x in db.fetch_objects(res.list())])
 
-    print "searching for 10.0.0.2"
+    print("searching for 10.0.0.2")
     res = db.search_cidr("10.0.0.2")
-    print res.list()
-    print[str(x) for x in db.fetch_objects(res.list())]
+    print(res.list())
+    print([str(x) for x in db.fetch_objects(res.list())])
 
-    print "searching for fddi.a.com"
+    print("searching for fddi.a.com")
     res = db.search_normal("fddi.a.com")
-    print res.list()
+    print(res.list())
 
-    print "searching referral index for fddi.a.com"
+    print("searching referral index for fddi.a.com")
     res = db.search_attr("referred-auth-area", "fddi.a.com")
-    print res.list()
-    print[str(x) for x in db.fetch_objects(res.list())]
+    print(res.list())
+    print([str(x) for x in db.fetch_objects(res.list())])

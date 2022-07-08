@@ -16,17 +16,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
-
 import sys
-import socket
-import SocketServer
 
 import config
-import Session
+import DirectiveProcessor
 import QueryParser
 import QueryProcessor
-import DirectiveProcessor
 import Rwhois
+import Session
+import SocketServer
 
 # server-wide variables
 
@@ -35,11 +33,9 @@ directive_processor = None
 
 
 class RwhoisTCPServer(SocketServer.ThreadingTCPServer):
-
     def __init__(self, server_address, RequestHandlerClass):
         self.allow_reuse_address = True
-        SocketServer.TCPServer.__init__(self, server_address,
-                                        RequestHandlerClass)
+        SocketServer.TCPServer.__init__(self, server_address, RequestHandlerClass)
 
     def verify_request(self, request, client_address):
         # implement access control here
@@ -47,7 +43,6 @@ class RwhoisTCPServer(SocketServer.ThreadingTCPServer):
 
 
 class RwhoisHandler(SocketServer.StreamRequestHandler):
-
     def readline(self):
         """Read a line of input from the client."""
         # a simple way of doing this
@@ -62,8 +57,7 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
         # ugh. this totally defeats any pipelining, not that rwhois
         # clients should be doing that.
         if len(lines) > 1 and config.verbose:
-            print "%s discarding additional input lines: %r" \
-                  % (self.client_address, lines)
+            print("%s discarding additional input lines: %r") % (self.client_address, lines)
         return lines[0]
 
     def handle(self):
@@ -80,7 +74,7 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
         session.wfile = self.wfile
 
         if config.verbose:
-            print "%s accepted connection" % (self.client_address, )
+            print("%s accepted connection") % (self.client_address,)
 
         c = 0
         while True:
@@ -110,12 +104,12 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
                 break
 
         if config.verbose:
-            print "%s disconnected" % (self.client_address, )
+            print("%s disconnected") % (self.client_address,)
 
     def handle_directive(self, session, line):
         if config.verbose:
-            print "%s directive %s" % (self.client_address, line)
-        if (line.startswith("-quit")):
+            print("%s directive %s") % (self.client_address, line)
+        if line.startswith("-quit"):
             self.quit_flag = True
             self.wfile.write(Rwhois.ok())
             return
@@ -123,7 +117,7 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
 
     def handle_query(self, session, line):
         if config.verbose:
-            print "%s query %s" % (self.client_address, line)
+            print("%s query %s") % (self.client_address, line)
         query_processor.process_query(session, line)
 
     def handle_error(self, session, error):
@@ -133,18 +127,21 @@ class RwhoisHandler(SocketServer.StreamRequestHandler):
 
 
 def usage(pname):
-    print """\
-usage: %s [-v] schema_file data_file [data_file ...]
-       -v: verbose """ % pname
+    print(
+        """
+        usage: %s [-v] schema_file data_file [data_file ...]
+        -v: verbose """
+    ) % pname
     sys.exit(64)
 
 
 def init(argv):
-    import MemDB
     import getopt
 
+    import MemDB
+
     pname = argv[0]
-    opts, argv = getopt.getopt(argv[1:], 'v')
+    opts, argv = getopt.getopt(argv[1:], "v")
     for o, a in opts:
         if o == "-v":
             config.verbose = True
@@ -171,16 +168,14 @@ def init(argv):
 
 def serve():
     # initialize the TCP server
-    server = RwhoisTCPServer((config.server_address, config.port),
-                             RwhoisHandler)
+    server = RwhoisTCPServer((config.server_address, config.port), RwhoisHandler)
 
     # and handle incoming connections
     if config.verbose:
         if not config.server_address:
-            print "listening on port %d" % config.port
+            print("listening on port %d") % config.port
         else:
-            print "listening on %s port %d" % \
-                  (config.server_address, config.port)
+            print("listening on %s port %d") % (config.server_address, config.port)
     server.serve_forever()
 
     sys.exit(0)

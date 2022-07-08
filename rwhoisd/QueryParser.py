@@ -19,24 +19,24 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 USA
 """
 
+import lex
+import Rwhois
+
 # queryparser.db must be set to a DB class instance.
 import yacc
-import lex
-
-import Rwhois
 
 db = None
 
 # Define the Lexer for the RWhois query language
 
-tokens = ('VALUE', 'QUOTEDVALUE', 'CLASS', 'ATTR', 'AND', 'OR', 'EQ', 'NEQ')
+tokens = ("VALUE", "QUOTEDVALUE", "CLASS", "ATTR", "AND", "OR", "EQ", "NEQ")
 
 # whitespace
-t_ignore = ' \t'
+t_ignore = " \t"
 # equality
-t_EQ = r'='
+t_EQ = r"="
 # inequality
-t_NEQ = r'!='
+t_NEQ = r"!="
 
 # for now, quoted values must have the wildcards inside the quotes.
 # I kind of wonder if anyone would ever notice this.
@@ -47,27 +47,27 @@ def t_firstvalue(t):
     r'^\*?[^\s"\'=*]+\*{0,2}'
 
     if db.is_objectclass(t.value):
-        t.type = 'CLASS'
+        t.type = "CLASS"
     else:
-        t.type = 'VALUE'
+        t.type = "VALUE"
     return t
 
 
 def t_VALUE(t):
     r'\*?[^\s"\'=!*]+\*{0,2}'
 
-    if t.value.upper() == 'AND':
-        t.type = 'AND'
+    if t.value.upper() == "AND":
+        t.type = "AND"
         t.value = t.value.upper()
         return t
-    if t.value.upper() == 'OR':
-        t.type = 'OR'
+    if t.value.upper() == "OR":
+        t.type = "OR"
         t.value = t.value.upper()
         return t
     if db.is_attribute(t.value):
-        t.type = 'ATTR'
+        t.type = "ATTR"
     else:
-        t.type = 'VALUE'
+        t.type = "VALUE"
     return t
 
 
@@ -90,24 +90,24 @@ lex.lex()
 
 
 def p_total_class_query(t):
-    'total : CLASS query'
+    "total : CLASS query"
 
     t[0] = t[2]
     t[0].set_class(t[1])
 
 
 def p_total_query(t):
-    'total : query'
+    "total : query"
 
     t[0] = t[1]
 
 
 def p_query_oper_querystr(t):
-    '''query : query AND querystr
-             | query OR  querystr'''
+    """query : query AND querystr
+    | query OR  querystr"""
 
     t[0] = t[1]
-    if t[2] == 'OR':
+    if t[2] == "OR":
         t[0].cur_clause = [t[3]]
         t[0].clauses.append(t[0].cur_clause)
     else:
@@ -115,7 +115,7 @@ def p_query_oper_querystr(t):
 
 
 def p_query_querystr(t):
-    'query : querystr'
+    "query : querystr"
 
     t[0] = Query()
     t[0].cur_clause = [t[1]]
@@ -123,26 +123,26 @@ def p_query_querystr(t):
 
 
 def p_querystr_attr_value(t):
-    '''querystr : ATTR EQ value
-                | ATTR NEQ value'''
+    """querystr : ATTR EQ value
+    | ATTR NEQ value"""
 
     t[0] = (t[1], t[2], t[3])
 
 
 def p_querystr_attr(t):
-    'querystr : ATTR'
+    "querystr : ATTR"
 
-    t[0] = (None, '=', t[1])
+    t[0] = (None, "=", t[1])
 
 
 def p_querystr_value(t):
-    'querystr : value'
+    "querystr : value"
 
-    t[0] = (None, '=', t[1])
+    t[0] = (None, "=", t[1])
 
 
 def p_value(t):
-    'value : VALUE'
+    "value : VALUE"
 
     t[1] = t[1].strip()
     if t[1]:
@@ -150,14 +150,14 @@ def p_value(t):
 
 
 def p_quotedvalue(t):
-    'value : QUOTEDVALUE'
+    "value : QUOTEDVALUE"
 
     t[0] = t[1].strip('"')
 
 
 def p_error(t):
     # print "Syntax error at '%s:%s'" % (t.type, t.value)
-    raise yacc.YaccError, "Syntax error at %r" % t.value
+    raise yacc.YaccError("Syntax error at %r" % t.value)
 
 
 class Query:
@@ -171,7 +171,7 @@ class Query:
 
     def __str__(self):
         self._prepare()
-        res = ''
+        res = ""
         for i in range(len(self.clauses)):
             cl = self.clauses[i]
             res += "clause %d:\n" % i
@@ -228,19 +228,20 @@ def parse(p, query):
     try:
         return p.parse(query)
     except (lex.LexError, yacc.YaccError):
-        raise Rwhois.RwhoisError, (350, "")
+        raise Rwhois.RwhoisError(350)
 
 
 if __name__ == "__main__":
     import sys
+
     import MemDB
 
     mydb = MemDB.MemDB()
 
-    print "loading schema:", sys.argv[1]
+    print("loading schema:", sys.argv[1])
     mydb.init_schema(sys.argv[1])
     for data_file in sys.argv[2:]:
-        print "loading data file:", data_file
+        print("loading data file:", data_file)
         mydb.load_data(data_file)
     mydb.index_data()
 
@@ -248,17 +249,17 @@ if __name__ == "__main__":
     qp = get_parser()
 
     for line in sys.stdin.readlines():
-        line = line.rstrip('\n')
+        line = line.rstrip("\n")
         line = line.strip()
         if not line:
             continue
-        print 'inputting:', repr(line)
+        print("inputting:", repr(line))
         try:
             res = qp.parse(line)
-            print repr(res)
+            print(repr(res))
         except (lex.LexError, yacc.YaccError) as x:
-            print "parse error occurred:", x
-            print "query:", line
+            print("parse error occurred:", x)
+            print("query:", line)
 
 #         lex.input(line)
 #         while 1:

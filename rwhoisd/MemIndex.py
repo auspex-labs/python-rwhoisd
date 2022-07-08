@@ -19,6 +19,7 @@
 
 import bisect
 import types
+
 import Cidr
 
 
@@ -106,8 +107,7 @@ class MemIndex:
         search_el = element(key, None)
         i = bisect.bisect_left(self.index, search_el)
         if i > len(self.index) or i < 0:
-            print "warning: bisect.bisect_left returned something " + \
-                  "unexpected:", i, len(self.index)
+            print("warning: bisect.bisect_left returned something " + "unexpected:", i, len(self.index))
         return (search_el, i)
 
     def find(self, key, prefix_match=False, max=0):
@@ -373,7 +373,7 @@ class element:
         """Compare only on the key."""
 
         if not isinstance(self.key, type(other.key)):
-            print "other is incompatible type?", repr(other.key), other.key
+            print("other is incompatible type?", repr(other.key), other.key)
         if self.key < other.key:
             return -1
         if self.key == other.key:
@@ -391,7 +391,7 @@ class element:
 
     def equals(self, other, prefix_match=0):
         if prefix_match:
-            return self.key == other.key[:len(self.key)]
+            return self.key == other.key[: len(self.key)]
         return self.key == other.key
 
     def total_equals(self, other):
@@ -402,31 +402,36 @@ class element:
 
 if __name__ == "__main__":
 
-    source = [("foo", "foo-id"), ("bar", "bar-id"), ("baz", "baz-id"),
-              ("foobar", "foo-id-2"), ("barnone", "bar-id-2"),
-              ("zygnax", "z-id")]
+    source = [
+        ("foo", "foo-id"),
+        ("bar", "bar-id"),
+        ("baz", "baz-id"),
+        ("foobar", "foo-id-2"),
+        ("barnone", "bar-id-2"),
+        ("zygnax", "z-id"),
+    ]
 
     mi = MemIndex()
     mi.addlist(source)
 
-    print "finding foobar:"
+    print("finding foobar:")
     res = mi.find("foobar")
-    print res
+    print(res)
 
-    print "finding foo*:"
+    print("finding foo*:")
     res = mi.find("foo", 1)
-    print res
+    print(res)
 
-    print "finding baz:"
+    print("finding baz:")
     res = mi.find("baz")
-    print res
+    print(res)
 
-    print "adding bork"
+    print("adding bork")
     mi.add("bork", "bork-id")
 
-    print "finding b*:"
+    print("finding b*:")
     res = mi.find("b", 1)
-    print res
+    print(res)
 
     ci = CidrMemIndex()
 
@@ -441,50 +446,50 @@ if __name__ == "__main__":
     ci.add("3ffe:4:5:6::0/64", "net-foo-e6")
     ci.add("48.12.6.0 - 48.12.6.95", "net-bar-1")
 
-    print "finding exactly 127.0.0.0/24"
+    print("finding exactly 127.0.0.0/24")
     res = ci.find(Cidr.new("127.0.0.0/24"))
-    print res
+    print(res)
 
-    print "finding exactly 127.0.0.16/32"
+    print("finding exactly 127.0.0.16/32")
     res = ci.find(Cidr.new("127.0.0.16/32"))
-    print res
+    print(res)
 
-    print "finding exactly 3ffe:4:5:6::0/64"
+    print("finding exactly 3ffe:4:5:6::0/64")
     res = ci.find(Cidr.valid_cidr("3ffe:4:5:6::/64"))
-    print res
+    print(res)
 
-    print "finding supernets of 127.0.0.16/32"
+    print("finding supernets of 127.0.0.16/32")
     res = ci.find_supernets(Cidr.new("127.0.0.16/32"))
-    print res
+    print(res)
 
-    print "finding supernets of 24.36.191.32/27"
+    print("finding supernets of 24.36.191.32/27")
     res = ci.find(Cidr.new("24.36.191.32/27"), 1)
-    print res
+    print(res)
 
-    print "finding supernets of 24.36.191.33/27"
+    print("finding supernets of 24.36.191.33/27")
     res = ci.find_supernets(Cidr.new("24.36.191.33/27"))
-    print res
+    print(res)
 
-    print "finding supernets of 24.36.191.64/27"
+    print("finding supernets of 24.36.191.64/27")
     res = ci.find_supernets(Cidr.new("24.36.191.64/27"))
-    print res
+    print(res)
 
-    print "finding supernets of 3ffe:4:5:6:7::0/80"
+    print("finding supernets of 3ffe:4:5:6:7::0/80")
     res = ci.find_supernets(Cidr.valid_cidr("3ffe:4:5:6:7::0/80"))
-    print res
+    print(res)
 
-    print "finding supernets of 48.12.6.90"
+    print("finding supernets of 48.12.6.90")
     res = ci.find_supernets(Cidr.valid_cidr("48.12.6.90"))
-    print res
+    print(res)
 
-    print "finding subnets of 127.0/16"
+    print("finding subnets of 127.0/16")
     res = ci.find_subnets(Cidr.new("127.0/16"))
-    print res
+    print(res)
 
-    print "finding subnets of 3ffe:4::0/32"
+    print("finding subnets of 3ffe:4::0/32")
     res = ci.find_subnets(Cidr.valid_cidr("3ffe:4::0/32"))
-    print res
+    print(res)
 
-    print "finding subnets of 48.12.0.0/16"
+    print("finding subnets of 48.12.0.0/16")
     res = ci.find_subnets(Cidr.valid_cidr("48.12.0.0/16"))
-    print res
+    print(res)

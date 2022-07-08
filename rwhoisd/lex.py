@@ -189,19 +189,16 @@ scanner you have defined.
 # -----------------------------------------------------------------------------
 
 __version__ = "1.3"
-
 import re
-import types
 import sys
-import copy
+import types
 
 # Exception thrown when invalid token encountered and no default
 
 
 class LexError(Exception):
-
     def __init__(self, message, s):
-        self.args = (message, )
+        self.args = (message,)
         self.text = s
 
 
@@ -209,7 +206,6 @@ class LexError(Exception):
 
 
 class LexToken:
-
     def __str__(self):
         return "LexToken(%s,%r,%d)" % (self.type, self.value, self.lineno)
 
@@ -232,14 +228,12 @@ class LexToken:
 
 
 class Lexer:
-
     def __init__(self):
         self.lexre = None  # Master regular expression
         self.lexdata = None  # Actual input data (as a string)
         self.lexpos = 0  # Current position in input text
         self.lexlen = 0  # Length of the input text
-        self.lexindexfunc = [
-        ]  # Reverse mapping of groups to functions and types
+        self.lexindexfunc = []  # Reverse mapping of groups to functions and types
         self.lexerrorf = None  # Error rule (if any)
         self.lextokens = None  # List of valid tokens
         self.lexignore = None  # Ignored characters
@@ -332,9 +326,9 @@ class Lexer:
                     if newtok.type not in self.lextokens:
                         raise LexError(
                             "%s:%d: Rule '%s' returned an unknown token type '%s'"
-                            % (func.func_code.co_filename,
-                               func.func_code.co_firstlineno, func.__name__,
-                               newtok.type), lexdata[lexpos:])
+                            % (func.func_code.co_filename, func.func_code.co_firstlineno, func.__name__, newtok.type),
+                            lexdata[lexpos:],
+                        )
 
                 return newtok
 
@@ -351,9 +345,7 @@ class Lexer:
                 if oldpos == lexpos:
                     # Error method didn't change text position at all. This is an error.
                     self.lexpos = lexpos
-                    raise LexError(
-                        "Scanning error. Illegal character '%s'" %
-                        (lexdata[lexpos]), lexdata[lexpos:])
+                    raise LexError("Scanning error. Illegal character '%s'" % (lexdata[lexpos]), lexdata[lexpos:])
                 if not newtok:
                     continue
                 self.lexpos = lexpos
@@ -378,19 +370,20 @@ class Lexer:
 
 def validate_file(filename):
     import os.path
+
     base, ext = os.path.splitext(filename)
-    if ext != '.py':
+    if ext != ".py":
         return 1  # No idea what the file is. Return OK
 
     try:
         f = open(filename)
         lines = f.readlines()
         f.close()
-    except IOError:
+    except OSError:
         return 1  # Oh well
 
-    fre = re.compile(r'\s*def\s+(t_[a-zA-Z_0-9]*)\(')
-    sre = re.compile(r'\s*(t_[a-zA-Z_0-9]*)\s*=')
+    fre = re.compile(r"\s*def\s+(t_[a-zA-Z_0-9]*)\(")
+    sre = re.compile(r"\s*(t_[a-zA-Z_0-9]*)\s*=")
     counthash = {}
     linen = 1
     noerror = 1
@@ -404,8 +397,7 @@ def validate_file(filename):
             if not prev:
                 counthash[name] = linen
             else:
-                print("%s:%d: Rule %s redefined. Previously defined on line %d"
-                      ) % (filename, linen, name, prev)
+                print("%s:%d: Rule %s redefined. Previously defined on line %d") % (filename, linen, name, prev)
                 noerror = 0
         linen += 1
     return noerror
@@ -419,7 +411,7 @@ def validate_file(filename):
 
 
 def _read_lextab(lexer, fdict, module):
-    exec "import %s as lextab" % module
+    exec("import %s as lextab") % module
     lexer.lexre = re.compile(lextab._lexre, re.VERBOSE)
     lexer.lexindexfunc = lextab._lextab
     for i in range(len(lextab._lextab)):
@@ -482,8 +474,7 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
     tokens = ldict.get("tokens", None)
     if not tokens:
         raise SyntaxError("lex: module does not define 'tokens'")
-    if not (isinstance(tokens, types.ListType)
-            or isinstance(tokens, types.TupleType)):
+    if not (isinstance(tokens, types.ListType) or isinstance(tokens, types.TupleType)):
         raise SyntaxError("lex: tokens must be a list or tuple.")
 
     # Build a dictionary of valid token names
@@ -493,7 +484,7 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
         # Utility function for verifying tokens
         def is_identifier(s):
             for c in s:
-                if not (c.isalnum() or c == '_'):
+                if not (c.isalnum() or c == "_"):
                     return 0
             return 1
 
@@ -512,7 +503,7 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
         print("lex: tokens = '%s'") % lexer.lextokens.keys()
 
     # Get a list of symbols with the t_ prefix
-    tsymbols = [f for f in ldict.keys() if f[:2] == 't_']
+    tsymbols = [f for f in ldict.keys() if f[:2] == "t_"]
 
     # Now build up a list of functions and a list of strings
     fsymbols = []
@@ -527,12 +518,10 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
             error = 1
 
     # Sort the functions by line number
-    fsymbols.sort(lambda x, y: cmp(x.func_code.co_firstlineno, y.func_code.
-                                   co_firstlineno))
+    fsymbols.sort(lambda x, y: cmp(x.func_code.co_firstlineno, y.func_code.co_firstlineno))
 
     # Sort the strings by regular expression length
-    ssymbols.sort(lambda x, y: (len(x[1]) < len(y[1])) -
-                  (len(x[1]) > len(y[1])))
+    ssymbols.sort(lambda x, y: (len(x[1]) < len(y[1])) - (len(x[1]) > len(y[1])))
 
     # Check for non-empty symbols
     if len(fsymbols) == 0 and len(ssymbols) == 0:
@@ -547,24 +536,21 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
 
         if not optimize:
             if f.func_code.co_argcount > 1:
-                print("%s:%d: Rule '%s' has too many arguments.") % (
-                    file, line, f.__name__)
+                print("%s:%d: Rule '%s' has too many arguments.") % (file, line, f.__name__)
                 error = 1
                 continue
 
             if f.func_code.co_argcount < 1:
-                print("%s:%d: Rule '%s' requires an argument.") % (file, line,
-                                                                   f.__name__)
+                print("%s:%d: Rule '%s' requires an argument.") % (file, line, f.__name__)
                 error = 1
                 continue
 
-            if f.__name__ == 't_ignore':
-                print("%s:%d: Rule '%s' must be defined as a string.") % (
-                    file, line, f.__name__)
+            if f.__name__ == "t_ignore":
+                print("%s:%d: Rule '%s' must be defined as a string.") % (file, line, f.__name__)
                 error = 1
                 continue
 
-        if f.__name__ == 't_error':
+        if f.__name__ == "t_error":
             lexer.lexerrorf = f
             continue
 
@@ -573,49 +559,43 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
                 try:
                     c = re.compile(f.__doc__, re.VERBOSE)
                 except re.error as e:
-                    print("%s:%d: Invalid regular expression for rule '%s'. %s"
-                          ) % (file, line, f.__name__, e)
+                    print("%s:%d: Invalid regular expression for rule '%s'. %s") % (file, line, f.__name__, e)
                     error = 1
                     continue
 
                 if debug:
-                    print("lex: Adding rule %s -> '%s'") % (f.__name__,
-                                                            f.__doc__)
+                    print("lex: Adding rule %s -> '%s'") % (f.__name__, f.__doc__)
 
             # Okay. The regular expression seemed okay.  Let's append it to the master regular
             # expression we're building
 
-            if (regex):
+            if regex:
                 regex += "|"
-            regex += "(?P<%s>%s)" % (f.__name__, f.__doc__)
+            regex += f"(?P<{f.__name__}>{f.__doc__})"
         else:
-            print("%s:%d: No regular expression defined for rule '%s'") % (
-                file, line, f.__name__)
+            print("%s:%d: No regular expression defined for rule '%s'") % (file, line, f.__name__)
 
     # Now add all of the simple rules
     for name, r in ssymbols:
 
-        if name == 't_ignore':
+        if name == "t_ignore":
             lexer.lexignore = r
             continue
 
         if not optimize:
-            if name == 't_error':
-                raise SyntaxError(
-                    "lex: Rule 't_error' must be defined as a function")
+            if name == "t_error":
+                raise SyntaxError("lex: Rule 't_error' must be defined as a function")
                 error = 1
                 continue
 
             if name[2:] not in lexer.lextokens:
-                print("lex: Rule '%s' defined for an unspecified token %s." %
-                      (name, name[2:]))
+                print("lex: Rule '{}' defined for an unspecified token {}.".format(name, name[2:]))
                 error = 1
                 continue
             try:
                 c = re.compile(r, re.VERBOSE)
             except re.error as e:
-                print("lex: Invalid regular expression for rule '%s'. %s" %
-                      (name, e))
+                print("lex: Invalid regular expression for rule '{}'. {}".format(name, e))
                 error = 1
                 continue
             if debug:
@@ -623,7 +603,7 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
 
         if regex:
             regex += "|"
-        regex += "(?P<%s>%s)" % (name, r)
+        regex += f"(?P<{name}>{r})"
 
     if not optimize:
         for f in files.keys():
@@ -635,8 +615,7 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
         lexer.lexre = re.compile(regex, re.VERBOSE)
 
         # Build the index to function map for the matching engine
-        lexer.lexindexfunc = [None
-                              ] * (max(lexer.lexre.groupindex.values()) + 1)
+        lexer.lexindexfunc = [None] * (max(lexer.lexre.groupindex.values()) + 1)
         for f, i in lexer.lexre.groupindex.items():
             handle = ldict[f]
             if isinstance(handle, types.FunctionType):
@@ -651,17 +630,14 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
 
         if lextab and optimize:
             lt = open(lextab + ".py", "w")
-            lt.write(
-                "# %s.py.  This file automatically created by PLY. Don't edit.\n"
-                % lextab)
+            lt.write("# %s.py.  This file automatically created by PLY. Don't edit.\n" % lextab)
             lt.write("_lexre = %s\n" % repr(regex))
             lt.write("_lextab = [\n")
             for i in range(0, len(lexer.lexindexfunc)):
                 t = lexer.lexindexfunc[i]
                 if t:
                     if t[0]:
-                        lt.write("  ('%s',%s),\n" %
-                                 (t[0].__name__, repr(t[1])))
+                        lt.write("  ('{}',{}),\n".format(t[0].__name__, repr(t[1])))
                     else:
                         lt.write("  (None,%s),\n" % repr(t[1]))
                 else:
@@ -670,16 +646,14 @@ def lex(module=None, debug=0, optimize=0, lextab="lextab"):
             lt.write("]\n")
             lt.write("_lextokens = %s\n" % repr(lexer.lextokens))
             lt.write("_lexignore = %s\n" % repr(lexer.lexignore))
-            if (lexer.lexerrorf):
+            if lexer.lexerrorf:
                 lt.write("_lexerrorf = %s\n" % repr(lexer.lexerrorf.__name__))
             else:
                 lt.write("_lexerrorf = None\n")
             lt.close()
 
     except re.error as e:
-        print(
-            "lex: Fatal error. Unable to compile regular expression rules. %s"
-        ) % e
+        print("lex: Fatal error. Unable to compile regular expression rules. %s") % e
         error = 1
     if error:
         raise SyntaxError("lex: Unable to build lexer.")

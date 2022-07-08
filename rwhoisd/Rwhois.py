@@ -60,7 +60,7 @@ error_codes = {
     501: "Service Not Available",
     502: "Unrecoverable Error",
     503: "Idle Time Exceeded",
-    560: ""
+    560: "",
 }
 
 
@@ -76,8 +76,7 @@ def error_message(value):
             msg = value
             code = 402
     if msg:
-        return "%%error %d %s: %s\r\n" % \
-               (code, error_codes.get(code, 402), msg)
+        return "%%error %d %s: %s\r\n" % (code, error_codes.get(code, 402), msg)
     else:
         return "%%error %d %s\r\n" % (code, error_codes.get(code, 402))
 
@@ -147,7 +146,7 @@ class rwhoisobject:
 
     def __str__(self):
         """A convenient string representation of this object"""
-        return '\n'.join([':'.join(x) for x in self.items()])
+        return "\n".join([":".join(x) for x in self.items()])
 
     def __repr__(self):
         return "<rwhoisobject: " + self.getid() + ">"
@@ -160,9 +159,9 @@ class rwhoisobject:
         items = [[cn, x, y] for x in attrs for y in self.data[x]]
 
         if prefix:
-            res = '\r\n'.join([prefix + ':'.join(x) for x in items])
+            res = "\r\n".join([prefix + ":".join(x) for x in items])
         else:
-            res = '\r\n'.join([':'.join(x) for x in items])
+            res = "\r\n".join([":".join(x) for x in items])
 
         if not res.endswith("\r\n"):
             res += "\r\n"
@@ -176,17 +175,17 @@ class rwhoisobject:
 
 
 # A basic test driver
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     obj = rwhoisobject()
-    obj.add_attr('id', '001')
-    obj.add_attr("class-name", 'contact')
+    obj.add_attr("id", "001")
+    obj.add_attr("class-name", "contact")
     obj.add_attr("class-name", "foo")
-    obj.add_attr('name', 'Aiden Quinn')
-    obj.add_attr('email', 'aquin@yahoo.com')
-    obj.add_attr('org-name', 'YoYoDyne Inc.')
-    obj.add_attr('email', 'aq@aol.net')
-    obj.add_attr('First-Name', 'Aiden ')
+    obj.add_attr("name", "Aiden Quinn")
+    obj.add_attr("email", "aquin@yahoo.com")
+    obj.add_attr("org-name", "YoYoDyne Inc.")
+    obj.add_attr("email", "aq@aol.net")
+    obj.add_attr("First-Name", "Aiden ")
 
-    print "obj:\n", obj
-    print "wire:\n", obj.to_wire_str()
+    print("obj:\n", obj)
+    print("wire:\n", obj.to_wire_str())

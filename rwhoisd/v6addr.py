@@ -17,13 +17,13 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-import socket
 import re
+import socket
 import struct
 
 # a simplified regex that just makes sure that the IPv6 address string
 # isn't obviously invalid.
-v6char_re = re.compile(r'^[0-9a-f:]+(:(\d{1,3}\.){3}\d{1,3})?$', re.I)
+v6char_re = re.compile(r"^[0-9a-f:]+(:(\d{1,3}\.){3}\d{1,3})?$", re.I)
 
 
 def v6str_to_addr(addrstr):
@@ -32,51 +32,51 @@ def v6str_to_addr(addrstr):
     # first make sure the address is made of valid IPv6 address
     # characters.
     if not v6char_re.match(addrstr):
-        raise socket.error("Invalid IPv6 address: '%s'" % (addrstr))
+        raise OSError("Invalid IPv6 address: '%s'" % (addrstr))
 
     toks = addrstr.split(":")
-    blanks = toks.count('')
+    blanks = toks.count("")
 
     # convert our IPv4 section.
-    if '.' in toks[-1]:
+    if "." in toks[-1]:
         packed_v4 = socket.inet_aton(toks[-1])
         unpacked_v4 = ["%x" % (x) for x in struct.unpack("!HH", packed_v4)]
         toks[-1:] = unpacked_v4
 
     if len(toks) > 8 or blanks > 3:
-        raise socket.error("Invalid IPv6 address: '%s'" % (addrstr))
+        raise OSError("Invalid IPv6 address: '%s'" % (addrstr))
 
     # three blanks must be ::
     if blanks == 3:
         if addrstr != "::":
-            raise socket.error("Invalid IPv6 address: '%s'" % (addrstr))
-        return '\x00' * 16
+            raise OSError("Invalid IPv6 address: '%s'" % (addrstr))
+        return "\x00" * 16
 
     # convert the tokens into a regular array of 8 things by inserting
     # zero strings for the elided section.
 
     # two blanks must be ::blah or blah::
     if blanks == 2:
-        z = ['0'] * (8 - len(toks) + 2)
+        z = ["0"] * (8 - len(toks) + 2)
         if addrstr.startswith("::"):
             toks[:2] = z
         elif addrstr.endswith("::"):
             toks[-2:] = z
         else:
-            raise socket.error("Invalid IPv6 address: '%s'" % (addrstr))
+            raise OSError("Invalid IPv6 address: '%s'" % (addrstr))
     # one blank is the blah::blah
     elif blanks == 1:
-        z = ['0'] * (8 - len(toks) + 1)
-        i = toks.index('')
-        toks[i:i + 1] = z
+        z = ["0"] * (8 - len(toks) + 1)
+        i = toks.index("")
+        toks[i : i + 1] = z
 
     if len(toks) != 8:
-        raise socket.error("Invalid IPv6 address: '%s'" % (addrstr))
+        raise OSError("Invalid IPv6 address: '%s'" % (addrstr))
 
     toks = [int(t, 16) for t in toks]
     for t in toks:
         if t & 0xFFFF != t:
-            raise socket.error("Invalid IPv6 address: '%s'" % (addrstr))
+            raise OSError("Invalid IPv6 address: '%s'" % (addrstr))
     return struct.pack("!8H", *toks)
 
 
@@ -85,8 +85,7 @@ def v6addr_to_str(addr):
     routine doesn't (yet) create an elided section."""
 
     if len(addr) != 16:
-        raise socket.error("incorrect address length: %s (should be 16)" %
-                           (len(addr)))
+        raise OSError("incorrect address length: %s (should be 16)" % (len(addr)))
     nums = [x for x in struct.unpack("!8H", addr)]
 
     # elding support mostly cobbled from the glibc version of
@@ -113,16 +112,16 @@ def v6addr_to_str(addr):
 
     # if we have a valid string of zeros, replace them with the token.
     if best_base != -1 and best_len > 1:
-        nums[best_base:best_base + best_len] = [':']
+        nums[best_base : best_base + best_len] = [":"]
 
-    if nums[0] == ':':
-        nums.insert(0, ':')
-    if nums[-1] == ':':
-        nums.append(':')
+    if nums[0] == ":":
+        nums.insert(0, ":")
+    if nums[-1] == ":":
+        nums.append(":")
 
     def n_to_str(n):
-        if n == ':':
-            return ''
+        if n == ":":
+            return ""
         return "%x" % (n)
 
     strs = [n_to_str(x) for x in nums]
@@ -134,7 +133,7 @@ def inet_pton(af, ip):
         return socket.inet_aton(ip)
     if af == socket.AF_INET6:
         return v6str_to_addr(ip)
-    raise socket.error("Address family not supported by protocol")
+    raise OSError("Address family not supported by protocol")
 
 
 def inet_ntop(af, packed_ip):
@@ -142,15 +141,15 @@ def inet_ntop(af, packed_ip):
         return socket.inet.ntoa(packed_ip)
     if af == socket.AF_INET6:
         return v6addr_to_str(packed_ip)
-    raise socket.error("Address family not supported by protocol")
+    raise OSError("Address family not supported by protocol")
 
 
 try:
     socket.inet_pton(socket.AF_INET6, "::1")
-except (AttributeError, NameError, socket.error):
+except (AttributeError, NameError, OSError):
     socket.inet_pton = inet_pton
     socket.inet_ntop = inet_ntop
-    socket.AF_INET6 = 'AF_INET6'
+    socket.AF_INET6 = "AF_INET6"
 
 # test driver
 if __name__ == "__main__":
@@ -159,10 +158,10 @@ if __name__ == "__main__":
         try:
             a = v6str_to_addr(addr)
             b = v6addr_to_str(a)
-        except socket.error as e:
-            print "addr was invalid!:", e
+        except OSError as e:
+            print("addr was invalid!:", e)
         else:
-            print "%s => %s" % (addr, b)
+            print("%s => %s") % (addr, b)
 
     try_good_addr("::")
     try_good_addr("::7")
@@ -178,10 +177,10 @@ if __name__ == "__main__":
     def try_bad_addr(addr):
         try:
             a = v6str_to_addr(addr)
-        except socket.error as e:
-            print e
+        except OSError as e:
+            print(e)
         else:
-            print "addr was valid! %s => %s" % (addr, v6addr_to_str(a))
+            print("addr was valid! %s => %s") % (addr, v6addr_to_str(a))
 
     # things that shouldn't parse
     try_bad_addr(":")

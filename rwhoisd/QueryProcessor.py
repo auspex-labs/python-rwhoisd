@@ -17,15 +17,15 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-import sys
 import re
+import sys
+
 import Cidr
-import Rwhois
 import QueryParser
+import Rwhois
 
 
 class QueryProcessor:
-
     def __init__(self, db):
         self.db = db
 
@@ -108,7 +108,7 @@ class QueryProcessor:
                 st, sti = term, i
                 break
         if not st:
-            raise Rwhois.RwhoisError, (351, "No indexed terms in query clause")
+            raise Rwhois.RwhoisError(351, "No indexed terms in query clause")
 
         # remove the search term from the clause, what remains is the
         # filter.
@@ -204,8 +204,7 @@ class QueryProcessor:
 
         # first check to see if the search is explictly for a referral
         for term in clause:
-            if (term[0] == "class-name" and term[1] == "=" and term[2]
-                    == "referral") or term[0] == "referred-auth-area":
+            if (term[0] == "class-name" and term[1] == "=" and term[2] == "referral") or term[0] == "referred-auth-area":
                 # in which case, we return nothing
                 return []
 
@@ -274,7 +273,7 @@ class QueryProcessor:
 
         limit_exceeded = False
         if session.limit and len(objects) > session.limit:
-            del objects[session.limit:]
+            del objects[session.limit :]
             limit_exceeded = True
 
         for obj in objects:
@@ -294,7 +293,6 @@ class QueryProcessor:
 
 
 class QueryResult:
-
     def __init__(self, objs=[], referrals=[]):
         self.data = objs
         self.ids = [x.getid() for x in objs]
@@ -386,9 +384,9 @@ def match_cidr(searchval, val):
     if not sv or not rv:
         return False
 
-    if (searchval.endswith("**")):
+    if searchval.endswith("**"):
         return rv.is_subnet(sv)
-    elif (searchval.endswith("*")):
+    elif searchval.endswith("*"):
         return rv.is_supernet(sv)
     else:
         return rv == sv
@@ -409,8 +407,8 @@ def is_subdomain(domain, subdomain):
     domain = domain.lower()
     subdomain = subdomain.lower()
 
-    dlist = domain.split('.')
-    sdlist = subdomain.split('.')
+    dlist = domain.split(".")
+    sdlist = subdomain.split(".")
 
     if len(dlist) > len(sdlist):
         return False
@@ -420,13 +418,13 @@ def is_subdomain(domain, subdomain):
     dlist.reverse()
     sdlist.reverse()
 
-    return dlist == sdlist[:len(dlist)]
+    return dlist == sdlist[: len(dlist)]
 
 
 def reduce_domain(domain):
-    dlist = domain.split('.')
+    dlist = domain.split(".")
     dlist.pop(0)
-    return '.'.join(dlist)
+    return ".".join(dlist)
 
 
 def is_heirarchical(value):
@@ -437,17 +435,17 @@ def is_heirarchical(value):
     return False
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import MemDB
     import Session
 
     db = MemDB.MemDB()
 
-    print "loading schema:", sys.argv[1]
+    print("loading schema:", sys.argv[1])
     db.init_schema(sys.argv[1])
     for data_file in sys.argv[2:]:
-        print "loading data file:", data_file
+        print("loading data file:", data_file)
         db.load_data(data_file)
     db.index_data()
 
@@ -464,7 +462,7 @@ if __name__ == '__main__':
         if line.startswith("#"):
             continue
 
-        print "parsing: '%s'" % line
+        print("parsing: '%s'") % line
         processor.process_query(session, line)
         session.wfile.write("\r\n")
         session.wfile.flush()

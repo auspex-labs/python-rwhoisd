@@ -18,13 +18,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 USA
 """
-
-import socket
-import types
 import copy
-import bisect
+import socket
 import struct
-import v6addr
+import types
 
 
 def new(address, netlen=-1):
@@ -51,16 +48,14 @@ class Cidr:
     def _initialize(self, address, netlen):
         """This a common constructor that is used by the subclasses."""
 
-        if isinstance(address, int) or \
-                isinstance(address, long) and netlen >= 0:
+        if isinstance(address, int) or isinstance(address, long) and netlen >= 0:
             self.numaddr, self.netlen = address, netlen
             self.addr = self._convert_ipaddr(address)
             self.calc()
             return
 
         if not self.is_valid_cidr(address):
-            raise ValueError(
-                repr(address) + " is not a valid CIDR representation")
+            raise ValueError(repr(address) + " is not a valid CIDR representation")
 
         if netlen < 0:
             if isinstance(address, types.StringType):
@@ -108,8 +103,7 @@ class Cidr:
 
         # make sure the network length is valid
         if not self.is_valid_netlen(self.netlen):
-            raise TypeError("network length must be between 0 and %d" %
-                            (self._max_netlen()))
+            raise TypeError("network length must be between 0 and %d" % (self._max_netlen()))
 
         # convert the string ipv4 address to a 32bit number
         self.numaddr = self._convert_ipstr(self.addr)
@@ -195,7 +189,7 @@ class CidrV4(Cidr):
         try:
             self._convert_ipstr(address)
             return True
-        except socket.error:
+        except OSError:
             return False
 
     def _base_mask(self, numaddr):
@@ -235,9 +229,8 @@ class CidrV6(Cidr):
         try:
             self._convert_ipstr(address)
             return True
-        except socket.error as e:
-            print(
-                "Failed to convert address string '%s': ") + str(e) % (address)
+        except OSError as e:
+            print("Failed to convert address string '%s': ") + str(e) % (address)
             return False
 
     def _base_mask(self, numaddr):
@@ -272,7 +265,7 @@ def valid_cidr(address):
     try:
         c = new(address)
         return c
-    except (ValueError, socket.error):
+    except (ValueError, OSError):
         return False
 
 
@@ -343,7 +336,7 @@ def netblock_to_cidr(start, end):
 
 # test driver
 if __name__ == "__main__":
-    import sys
+
     a = new("127.00.000.1/24")
     b = new("127.0.0.1", 32)
     c = new("24.232.119.192", 26)
@@ -363,35 +356,33 @@ if __name__ == "__main__":
     except ValueError as x:
         print("error:", x)
 
-    print("cidr:", a, "num addresses:", a.length(), "ending address", a.end(),
-          "netmask", a.netmask())
+    print("cidr:", a, "num addresses:", a.length(), "ending address", a.end(), "netmask", a.netmask())
 
-    print("cidr:", j, "num addresses:", j.length(), "ending address", j.end(),
-          "netmask", j.netmask())
+    print("cidr:", j, "num addresses:", j.length(), "ending address", j.end(), "netmask", j.netmask())
 
     clist = [a, b, c, d, e, f, g, h, i, j]
     print("unsorted list of cidr objects:\n  ", clist)
 
     clist.sort()
-    print "sorted list of cidr object:\n  ", clist
+    print("sorted list of cidr object:\n  ", clist)
 
     k = new("2001:3c01::1:0", 120)
-    print("supernet: ", str(j), " supernet of ", str(k), "? ",
-          str(j.is_supernet(k)))
-    print("supernet: ", str(k), " supernet of ", str(j), "? ",
-          str(k.is_supernet(j)))
+    print("supernet: ", str(j), " supernet of ", str(k), "? ", str(j.is_supernet(k)))
+    print("supernet: ", str(k), " supernet of ", str(j), "? ", str(k.is_supernet(j)))
     print("subnet: ", str(j), " subnet of ", str(k), "? ", str(j.is_subnet(k)))
     print("subnet: ", str(k), " subnet of ", str(j), "? ", str(k.is_subnet(j)))
 
-    netblocks = [("192.168.10.0", "192.168.10.255"),
-                 ("192.168.10.0", "192.168.10.63"),
-                 ("172.16.0.0", "172.16.127.255"),
-                 ("24.33.41.22", "24.33.41.37"),
-                 ("196.11.1.0", "196.11.30.255"),
-                 ("192.247.1.0", "192.247.10.255"),
-                 ("10.131.43.3", "10.131.44.7"),
-                 ("3ffe:4:5::", "3ffe:4:5::ffff"),
-                 ("3ffe:4:5::", "3ffe:4:6::1")]
+    netblocks = [
+        ("192.168.10.0", "192.168.10.255"),
+        ("192.168.10.0", "192.168.10.63"),
+        ("172.16.0.0", "172.16.127.255"),
+        ("24.33.41.22", "24.33.41.37"),
+        ("196.11.1.0", "196.11.30.255"),
+        ("192.247.1.0", "192.247.10.255"),
+        ("10.131.43.3", "10.131.44.7"),
+        ("3ffe:4:5::", "3ffe:4:5::ffff"),
+        ("3ffe:4:5::", "3ffe:4:6::1"),
+    ]
 
     for start, end in netblocks:
         print("netblock %s - %s:") % (start, end)
