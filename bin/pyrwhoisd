@@ -20,9 +20,10 @@
 # USA
 # -*- python -*-
 
-import RwhoisServer
-import sys
 import os
+import sys
+
+import RwhoisServer
 
 # determine if the rwhoisd package is in the standard spot relative to
 # this script.
@@ -35,4 +36,4 @@ RwhoisServer.init(sys.argv)
 try:
     RwhoisServer.serve()
 except KeyboardInterrupt:
-    print "interrupted"
+    print("interrupted")

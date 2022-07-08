@@ -18,8 +18,9 @@
 # USA
 
 import re
-import Rwhois
+
 import config
+import Rwhois
 
 
 class DirectiveProcessor:
@@ -34,7 +35,7 @@ class DirectiveProcessor:
             "holdconnect": self.hold_directive,
             "directive": self.directive_directive,
             "xfer": self.xfer_directive,
-            "status": self.status_directive
+            "status": self.status_directive,
         }
 
     def process_directive(self, session, line):
@@ -109,8 +110,7 @@ class DirectiveProcessor:
             dir = arglist[0]
             desc = dir.capitalize()
             session.wfile.write("%%directive directive:%s\r\n" % dir)
-            session.wfile.write("%%directive description:%s directive\r\n" %
-                                desc)
+            session.wfile.write("%%directive description:%s directive\r\n" % desc)
         else:
             session.wfile.write(Rwhois.error_message(400))
             return
@@ -125,8 +125,7 @@ class DirectiveProcessor:
         session.wfile.write("%%status limit: %d\r\n" % session.limit)
         session.wfile.write("%%status holdconnect: %s\r\n" % hc_str)
         session.wfile.write("%status forward: off\r\n")
-        session.wfile.write("%%status objects: %d\r\n" %
-                            len(self.db.main_index))
+        session.wfile.write("%%status objects: %d\r\n" % len(self.db.main_index))
         session.wfile.write("%status display: dump\r\n")
         session.wfile.write("%status contact: N/A\r\n")
         session.wfile.write(Rwhois.ok())
@@ -183,9 +182,10 @@ class DirectiveProcessor:
         session.wfile.write(Rwhois.ok())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import sys
+
     import MemDB
 
     session = Session.Context()
@@ -201,15 +201,27 @@ if __name__ == '__main__':
     dp = DirectiveProcessor(db)
 
     directives = [
-        "-rwhois", "-rwhois foo bar baz", "-rwhois V-1.6 noise blah", "-limit",
-        "-limit a", "-limit 20", "-holdconnect", "-holdconnect on",
-        "-holdconnect foo", "-directive", "-directive limit", "-directive foo",
-        "-xfer", "-xfer a.com", "-xfer a.com class=contact",
+        "-rwhois",
+        "-rwhois foo bar baz",
+        "-rwhois V-1.6 noise blah",
+        "-limit",
+        "-limit a",
+        "-limit 20",
+        "-holdconnect",
+        "-holdconnect on",
+        "-holdconnect foo",
+        "-directive",
+        "-directive limit",
+        "-directive foo",
+        "-xfer",
+        "-xfer a.com",
+        "-xfer a.com class=contact",
         "-xfer a.com class=domain attribute=domain-name",
         "-xfer foo class=bar",
-        "-xfer foo class=bar attribute=baz attribute=boo", "-foo baz bar"
+        "-xfer foo class=bar attribute=baz attribute=boo",
+        "-foo baz bar",
     ]
 
     for dir in directives:
-        print "trying %r:" % dir
-        print dp.process_directive(session, dir)
+        print("trying %r:") % dir
+        print(dp.process_directive(session, dir))

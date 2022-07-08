@@ -1,21 +1,23 @@
-# This file is part of python-rwhoisd
-#
-# Copyright (C) 2003, 2008 David E. Blacka
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
-# USA
+"""
+This file is part of python-rwhoisd
+
+Copyright (C) 2003, 2008 David E. Blacka
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+USA
+"""
 
 import socket
 import types
@@ -234,8 +236,8 @@ class CidrV6(Cidr):
             self._convert_ipstr(address)
             return True
         except socket.error as e:
-            print "Failed to convert address string '%s': " + str(e) % (
-                address)
+            print(
+                "Failed to convert address string '%s': ") + str(e) % (address)
             return False
 
     def _base_mask(self, numaddr):
@@ -353,35 +355,33 @@ if __name__ == "__main__":
     i = new("3ffe:4:201e:beef::0/64")
     j = new("2001:3c01::/32")
 
-    print f.addr
-    print j.addr
+    print(f.addr)
+    print(j.addr)
 
     try:
         bad = new("24.261.119.0", 32)
     except ValueError as x:
-        print "error:", x
+        print("error:", x)
 
-    print "cidr:", a, "num addresses:", a.length(), "ending address", \
-        a.end(), "netmask", a.netmask()
+    print("cidr:", a, "num addresses:", a.length(), "ending address", a.end(),
+          "netmask", a.netmask())
 
-    print "cidr:", j, "num addresses:", j.length(), "ending address", \
-        j.end(), "netmask", j.netmask()
+    print("cidr:", j, "num addresses:", j.length(), "ending address", j.end(),
+          "netmask", j.netmask())
 
     clist = [a, b, c, d, e, f, g, h, i, j]
-    print "unsorted list of cidr objects:\n  ", clist
+    print("unsorted list of cidr objects:\n  ", clist)
 
     clist.sort()
     print "sorted list of cidr object:\n  ", clist
 
     k = new("2001:3c01::1:0", 120)
-    print "supernet: ", str(j), " supernet of ", str(k), "? ", \
-        str(j.is_supernet(k))
-    print "supernet: ", str(k), " supernet of ", str(j), "? ", \
-        str(k.is_supernet(j))
-    print "subnet: ", str(j), " subnet of ", str(k), "? ", \
-        str(j.is_subnet(k))
-    print "subnet: ", str(k), " subnet of ", str(j), "? ", \
-        str(k.is_subnet(j))
+    print("supernet: ", str(j), " supernet of ", str(k), "? ",
+          str(j.is_supernet(k)))
+    print("supernet: ", str(k), " supernet of ", str(j), "? ",
+          str(k.is_supernet(j)))
+    print("subnet: ", str(j), " subnet of ", str(k), "? ", str(j.is_subnet(k)))
+    print("subnet: ", str(k), " subnet of ", str(j), "? ", str(k.is_subnet(j)))
 
     netblocks = [("192.168.10.0", "192.168.10.255"),
                  ("192.168.10.0", "192.168.10.63"),
@@ -394,6 +394,6 @@ if __name__ == "__main__":
                  ("3ffe:4:5::", "3ffe:4:6::1")]
 
     for start, end in netblocks:
-        print "netblock %s - %s:" % (start, end)
+        print("netblock %s - %s:") % (start, end)
         blocks = netblock_to_cidr(start, end)
-        print blocks
+        print(blocks)

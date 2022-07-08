@@ -46,5 +46,4 @@ verbose = False
 # END Editable Configuration Options
 
 version = "0.4.1"
-banner_string = "%%rwhois V-1.5 %s (python-rwhoisd %s)" % (server_hostname,
-                                                           version)
+banner_string = f"%rwhois V-1.5 {server_hostname} (python-rwhoisd {version})"
